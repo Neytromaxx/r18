@@ -1,0 +1,179 @@
+body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--c-bg-base);
+    color: var(--c-text);
+    font-size: var(--fs-base);
+    /* Mobil "pastga tortib qayta yuklash" (pull-to-refresh) o'chiriladi —
+       o'rniga o'ng navdagi "Yangilash" tugmasi ishlatiladi. */
+    overscroll-behavior-y: contain;
+  }
+  
+  /* Glass */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: var(--r-lg);
+  }
+  
+  /* Animatsion fon — player'da chiroyli bo'lsin */
+  .app-bg {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(19, 60, 111, 0.6) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+      var(--c-bg-base);
+    z-index: -1;
+  }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--c-border); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  
+  /* Selection */
+  ::selection { background: var(--c-accent); color: var(--c-bg-base); }
+  /* ══════════════════════════════════════
+     MOTION PRIMITIVLARI — luxury hissiyot
+     (s22 admin bilan bir xil dizayn tili)
+  ══════════════════════════════════════ */
+
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .anim-rise { animation: rise-in var(--t-med) var(--ease-out) both; }
+
+  .stagger > * { animation: rise-in var(--t-med) var(--ease-out) both; }
+  .stagger > *:nth-child(1)  { animation-delay: 0.03s; }
+  .stagger > *:nth-child(2)  { animation-delay: 0.07s; }
+  .stagger > *:nth-child(3)  { animation-delay: 0.11s; }
+  .stagger > *:nth-child(4)  { animation-delay: 0.15s; }
+  .stagger > *:nth-child(5)  { animation-delay: 0.19s; }
+  .stagger > *:nth-child(6)  { animation-delay: 0.23s; }
+  .stagger > *:nth-child(7)  { animation-delay: 0.27s; }
+  .stagger > *:nth-child(8)  { animation-delay: 0.31s; }
+  .stagger > *:nth-child(9)  { animation-delay: 0.35s; }
+  .stagger > *:nth-child(10) { animation-delay: 0.39s; }
+  .stagger > *:nth-child(11) { animation-delay: 0.43s; }
+  .stagger > *:nth-child(12) { animation-delay: 0.47s; }
+
+  .card-lift {
+    transition:
+      transform var(--t-med) var(--ease-out),
+      box-shadow var(--t-med) var(--ease-out),
+      border-color var(--t-med) var(--ease-out);
+  }
+  .card-lift:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 212, 255, 0.35);
+    box-shadow: var(--glass-shadow), 0 12px 32px rgba(0, 0, 0, 0.45), var(--led-glow-sm);
+  }
+  .card-lift:active { transform: translateY(-1px) scale(0.995); }
+
+  .press { transition: transform var(--t-fast) var(--ease-spring); }
+  .press:active { transform: scale(0.96); }
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
+  }
+  .skeleton {
+    border-radius: var(--r-md);
+    background:
+      linear-gradient(100deg,
+        rgba(89, 133, 189, 0.08) 40%,
+        rgba(89, 133, 189, 0.22) 50%,
+        rgba(89, 133, 189, 0.08) 60%) 0 0 / 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1;   box-shadow: var(--led-glow-sm); }
+    50%      { opacity: 0.55; box-shadow: none; }
+  }
+  .led-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--led);
+    box-shadow: var(--led-glow-sm);
+    animation: led-pulse 2.2s ease-in-out infinite;
+  }
+
+  /* SHEEN: hoverda karta ustidan yorug'lik supurilishi */
+  .sheen { position: relative; overflow: hidden; }
+  .sheen::before {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    left: -80%;
+    width: 55%;
+    background: linear-gradient(105deg,
+      transparent 0%,
+      rgba(240, 248, 255, 0.055) 45%,
+      rgba(0, 212, 255, 0.09) 55%,
+      transparent 100%);
+    transform: skewX(-18deg);
+    pointer-events: none;
+    transition: left var(--t-slow) var(--ease-out);
+  }
+  .sheen:hover::before { left: 130%; }
+
+  /* MODAL MOTION: .overlay/.modal-overlay > .modal — global kirish */
+  @keyframes overlay-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modal-pop {
+    from { opacity: 0; transform: translateY(18px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .overlay, .modal-overlay { animation: overlay-in var(--t-fast) var(--ease-out) both; }
+  .overlay > .modal, .modal-overlay > .modal { animation: modal-pop var(--t-med) var(--ease-out) both; }
+
+  /* CAROUSEL + m-carousel (telefonda surib o'tiladigan kartalar) */
+  .carousel {
+    display: flex;
+    gap: var(--sp-md);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+    -webkit-mask-image: linear-gradient(90deg,
+      transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(90deg,
+      transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+  }
+  .carousel::-webkit-scrollbar { display: none; }
+  .carousel > * { flex: 0 0 84%; max-width: 340px; scroll-snap-align: start; }
+
+  @media (max-width: 767px) {
+    .m-carousel {
+      display: flex !important;
+      grid-template-columns: none !important;
+      gap: var(--sp-md);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+      -webkit-mask-image: linear-gradient(90deg,
+        transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+              mask-image: linear-gradient(90deg,
+        transparent 0, #000 12px, #000 calc(100% - 24px), transparent 100%);
+    }
+    .m-carousel::-webkit-scrollbar { display: none; }
+    .m-carousel > * { flex: 0 0 84%; scroll-snap-align: start; }
+  }
+
+  /* LED-TITLE: sarlavha ostida qisqa porlab turadigan chiziq (utility) */
+  .led-title { position: relative; display: inline-block; padding-bottom: 6px; }
+  .led-title::after {
+    content: '';
+    position: absolute;
+    left: 0; bottom: 0;
+    width: 32px; height: 2px;
+    border-radius: 2px;
+    background: var(--led);
+    box-shadow: var(--led-glow-sm);
+  }

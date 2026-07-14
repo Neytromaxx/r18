@@ -1,0 +1,76 @@
+/* Deep Ocean — Player Portal */
+:root {
+    /* Ranglar */
+    --c-bg-base:    #060D1A;
+    --c-bg-dark:    #0C1F41;
+    --c-bg-mid:     #133C6F;
+    --c-border:     #5985BD;
+    --c-accent:     #00D4FF;
+    --c-text:       #F0F8FF;
+    --c-text-dim:   #8FA8C8;
+  
+    /* Holat */
+    --c-success:    #22C55E;
+    --c-warning:    #F59E0B;
+    --c-danger:     #EF4444;
+  
+    /* Glass */
+    --glass-bg:     rgba(12, 31, 65, 0.55);
+    --glass-border: rgba(89, 133, 189, 0.25);
+    --glass-blur:   blur(20px) saturate(160%);
+    --glass-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  
+    /* Spacing */
+    --sp-xs: 0.25rem;
+    --sp-sm: 0.5rem;
+    --sp-md: 1rem;
+    --sp-lg: 1.5rem;
+    --sp-xl: 2rem;
+    --sp-2xl: 3rem;
+  
+    /* Radius */
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --r-xl: 24px;
+  
+    /* Typography */
+    --fs-xs: 0.75rem;
+    --fs-sm: 0.875rem;
+    --fs-base: 1rem;
+    --fs-lg: 1.25rem;
+    --fs-xl: 1.5rem;
+    --fs-2xl: 2rem;
+  
+    /* Touch */
+    --touch-min: 44px;
+  
+    /* Z-index */
+    --z-nav: 100;
+    --z-modal: 1000;
+    --z-toast: 2000;
+  }
+  /* ══ Motion — luxury hissiyot: yumshoq, smooth (s22 bilan bir xil til) ══ */
+  :root {
+    --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --t-fast:   0.18s;
+    --t-med:    0.32s;
+    --t-slow:   0.55s;
+
+    /* LED / glow (accent cyan) */
+    --led:          var(--c-accent);
+    --led-glow:     0 0 8px rgba(0, 212, 255, 0.55), 0 0 20px rgba(0, 212, 255, 0.25);
+    --led-glow-sm:  0 0 6px rgba(0, 212, 255, 0.45);
+    --glow-success: 0 0 8px rgba(34, 197, 94, 0.45);
+    --glow-danger:  0 0 8px rgba(239, 68, 68, 0.45);
+  }
+
+  /* Harakat kamaytirilgan foydalanuvchilar uchun animatsiyalarni o'chiramiz */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }

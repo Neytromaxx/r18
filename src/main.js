@@ -2,11 +2,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
-import router from './router'
+import router from './app/router'
+
+import './shared/styles/reset.css'
+import './shared/styles/tokens.css'
+import './shared/styles/global.css'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-
 app.mount('#app')
