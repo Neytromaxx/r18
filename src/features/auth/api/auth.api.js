@@ -12,7 +12,7 @@ export const authApi = {
   // Email yangi bo'lsa backend akkaunt yaratadi (parolsiz), mavjud bo'lsa
   // login kodi yuboradi. Har doim success qaytaradi (enumeration himoyasi).
   requestLoginCode(email) {
-    return api.post('/auth/register-code', { email })
+    return api.post('/auth/login/request-code', { email })
   },
   verifyLoginCode(email, code) {
     return api.post('/auth/login/verify-code', {
