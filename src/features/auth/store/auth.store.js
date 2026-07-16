@@ -27,6 +27,13 @@ export const useAuthStore = defineStore('auth', () => {
     await fetchMe()
   }
 
+  // ── SSO: n20 (gaming)dan kelgan bir martalik kod bilan kirish ──
+  async function loginWithSsoCode(code) {
+    const { data } = await authApi.ssoExchange(code)
+    tokenStorage.set(data.access_token, data.refresh_token)
+    await fetchMe()
+  }
+
   async function fetchMe() {
     const { data } = await authApi.getMe()
     user.value = data.account
@@ -52,7 +59,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, isAuthenticated,
-    requestLoginCode, loginWithCode, loginWithGoogle,
+    requestLoginCode, loginWithCode, loginWithGoogle, loginWithSsoCode,
     fetchMe, logout, init,
   }
 })
