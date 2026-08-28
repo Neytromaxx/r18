@@ -23,6 +23,18 @@ export const routes = [
     name: 'streamer-public',
     component: () => import('@/features/streamer/views/StreamerPublicView.vue'),
   },
+  {
+    // SSO qabul — n20'dan ?code= bilan (bir martalik, 60s)
+    path: '/sso',
+    name: 'sso',
+    component: () => import('@/features/auth/views/SsoView.vue'),
+  },
+  {
+    // To'lovdan qaytish/holat sahifasi (Payme return URL)
+    path: '/pay/:intentId',
+    name: 'pay-status',
+    component: () => import('@/features/wallet/views/PaymentStatusView.vue'),
+  },
 
   {
     path: '/',

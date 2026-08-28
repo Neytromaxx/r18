@@ -7,7 +7,11 @@ const baseURL = import.meta.env.VITE_API_URL
 export const api = axios.create({
   baseURL,
   timeout: API_TIMEOUT,
-  headers: { 'Content-Type': 'application/json' },
+  headers: {
+    'Content-Type': 'application/json',
+    // Sessiya siyosati: donation-web sessiyalari 14 kun harakatsizlikkacha yashaydi
+    'X-Client-App': 'donation-web',
+  },
 })
 
 api.interceptors.request.use((config) => {

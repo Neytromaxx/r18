@@ -1,6 +1,6 @@
 <script setup>
 // Donat yuborish — o'yinchini qidirib tanlash + summa + xabar.
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { toast } from 'vue-sonner'
 import { donationsApi } from '../api/donations.api'
 import { fmtSom } from '@/shared/utils/money'
@@ -45,6 +45,15 @@ function reset() {
   selected.value = null; q.value = ''; amount.value = ''; message.value = ''; results.value = []
 }
 
+// Cover-fee: streamer to'liq summani oladi, 0.7% fee balansdan ustiga yechiladi
+const coverFee = ref(false)
+const FEE_RATE = 0.007
+const feePreview = computed(() => Math.round((Number(amount.value) || 0) * FEE_RATE * 100) / 100)
+const debitPreview = computed(() => {
+  const amt = Number(amount.value) || 0
+  return coverFee.value ? amt + feePreview.value : amt
+})
+
 async function send() {
   if (!selected.value) { toast.error("O'yinchini tanlang"); return }
   const amt = Number(amount.value)
@@ -56,6 +65,7 @@ async function send() {
       recipient_public_id: selected.value.public_id,
       amount: amt,
       message: message.value.trim() || null,
+      cover_fee: coverFee.value,
     })
     toast.success(`${selected.value.nickname}'ga ${fmtSom(amt)} so'm yuborildi!`)
     reset()
@@ -101,6 +111,15 @@ async function send() {
     <label class="lbl">Xabar (ixtiyoriy)</label>
     <input v-model="message" type="text" maxlength="280" placeholder="Omad!" class="inp" />
 
+    <label class="cover">
+      <input v-model="coverFee" type="checkbox" />
+      <span>To'liq summa yuborish (fee 0.7% mendan)</span>
+    </label>
+    <p v-if="Number(amount) > 0" class="calc-line">
+      Oladi: <b>{{ fmtSom(coverFee ? Number(amount) : Number(amount) - feePreview) }}</b> so'm ·
+      Yechiladi: <b>{{ fmtSom(debitPreview) }}</b> so'm
+    </p>
+
     <button class="btn-send" :disabled="sending || !selected" @click="send">
       <i class="fa-solid fa-hand-holding-heart"></i>
       {{ sending ? 'Yuborilmoqda…' : 'Donat yuborish' }}
@@ -123,6 +142,10 @@ async function send() {
 .res .nick { font-weight: 700; }
 .res .pid { margin-left: auto; font-size: var(--fs-xs); color: var(--c-text-dim); }
 .muted { color: var(--c-text-dim); font-size: var(--fs-sm); padding: 8px 4px; }
+.cover { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.85rem; color: var(--c-text-dim, #9fb2c8); cursor: pointer; }
+.cover input { width: 17px; height: 17px; accent-color: var(--c-accent, #00d4ff); }
+.calc-line { font-size: 0.8rem; color: var(--c-text-dim, #9fb2c8); margin-top: 6px; }
+.calc-line b { color: var(--c-text, #eaf2ff); }
 .btn-send { height: 48px; margin-top: 12px; border-radius: 12px; background: var(--c-accent, #00d4ff); color: var(--c-bg-base, #04101f); font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-send:disabled { opacity: 0.5; }
 </style>

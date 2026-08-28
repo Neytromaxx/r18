@@ -1,11 +1,14 @@
 <script setup>
 // Public streamer donat sahifasi (DonationAlerts uslubi) — /s/:public_id.
-// Har kim ko'ra oladi; donat qilish uchun tizimga kirish talab qilinadi.
-import { ref, onMounted } from 'vue'
+// GUEST: faqat PSP (Payme) orqali donat (fee 1.5%, W coin yo'q).
+// LOGIN: "Balansdan" (0.7%) yoki "Payme" (1.5%) — tanlov bilan.
+// Cover-fee: streamer to'liq summani oladi, fee donator ustiga.
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { streamerApi, STREAM_PLATFORMS } from '../api/streamer.api'
 import { donationsApi } from '@/features/donations/api/donations.api'
+import { billingApi, PSP_DONATION_RATE, WALLET_DONATION_RATE } from '@/features/wallet/api/billing.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fmtSom } from '@/shared/utils/money'
 
@@ -20,6 +23,10 @@ const profile = ref(null)
 
 const amount = ref('')
 const message = ref('')
+const guestName = ref('')
+const coverFee = ref(false)
+// To'lov usuli: 'wallet' (faqat login) | 'payme'
+const method = ref('payme')
 const sending = ref(false)
 
 const platforms = STREAM_PLATFORMS
@@ -28,6 +35,23 @@ function linkList() {
   const l = profile.value?.links || {}
   return platforms.filter((p) => l[p.key]).map((p) => ({ ...p, url: l[p.key] }))
 }
+
+// Joriy usul bo'yicha fee stavkasi
+const feeRate = computed(() =>
+  method.value === 'wallet' ? WALLET_DONATION_RATE : PSP_DONATION_RATE,
+)
+const feePreview = computed(() => {
+  const amt = Number(amount.value) || 0
+  return Math.round(amt * feeRate.value * 100) / 100
+})
+const totalPreview = computed(() => {
+  const amt = Number(amount.value) || 0
+  return coverFee.value ? amt + feePreview.value : amt
+})
+const netPreview = computed(() => {
+  const amt = Number(amount.value) || 0
+  return coverFee.value ? amt : amt - feePreview.value
+})
 
 async function load() {
   loading.value = true
@@ -39,26 +63,62 @@ async function load() {
   } finally {
     loading.value = false
   }
+  // Login user default: balansdan (arzonroq)
+  if (auth.isAuthenticated) method.value = 'wallet'
+}
+
+function validAmount() {
+  const amt = Number(amount.value)
+  const min = Number(profile.value?.min_amount) || 1
+  if (!amt || amt < min) {
+    toast.error(`Minimal ${fmtSom(min)} so'm`)
+    return null
+  }
+  return amt
+}
+
+// Balansdan (faqat login, 0.7%)
+async function donateWallet(amt) {
+  await donationsApi.donate({
+    recipient_type: 'player',
+    recipient_public_id: publicId,
+    amount: amt,
+    message: message.value.trim() || null,
+    cover_fee: coverFee.value,
+  })
+  toast.success(`${profile.value.display_name}'ga ${fmtSom(amt)} so'm yuborildi!`)
+  amount.value = ''; message.value = ''
+}
+
+// PSP (Payme) — guest ham, login ham (1.5%)
+async function donatePsp(amt) {
+  const { data } = await billingApi.createDonationIntent({
+    provider: 'payme',
+    recipient_type: 'player',
+    recipient_public_id: publicId,
+    amount: amt,
+    message: message.value.trim() || null,
+    guest_name: auth.isAuthenticated ? null : (guestName.value.trim() || null),
+    cover_fee: coverFee.value,
+  })
+  // Payme checkout sahifasiga o'tamiz — qaytish /pay/:id ga bo'ladi
+  window.location.href = data.checkout_url
 }
 
 async function donate() {
-  if (!auth.isAuthenticated) {
-    router.push({ name: 'login', query: { redirect: route.fullPath } })
-    return
-  }
-  const amt = Number(amount.value)
-  const min = Number(profile.value?.min_amount) || 1
-  if (!amt || amt < min) { toast.error(`Minimal ${fmtSom(min)} so'm`); return }
+  const amt = validAmount()
+  if (amt == null) return
   sending.value = true
   try {
-    await donationsApi.donate({
-      recipient_type: 'player',
-      recipient_public_id: publicId,
-      amount: amt,
-      message: message.value.trim() || null,
-    })
-    toast.success(`${profile.value.display_name}'ga ${fmtSom(amt)} so'm yuborildi!`)
-    amount.value = ''; message.value = ''
+    if (method.value === 'wallet') {
+      if (!auth.isAuthenticated) {
+        router.push({ name: 'login', query: { redirect: route.fullPath } })
+        return
+      }
+      await donateWallet(amt)
+    } else {
+      await donatePsp(amt)
+    }
   } catch (e) {
     toast.error(e.response?.data?.error?.message || e.response?.data?.detail || 'Yuborilmadi')
   } finally {
@@ -100,14 +160,66 @@ onMounted(load)
       <!-- Donat -->
       <div class="donate">
         <h2>Donat yuborish</h2>
+
+        <!-- To'lov usuli -->
+        <div class="methods">
+          <button
+            v-if="auth.isAuthenticated"
+            class="method"
+            :class="{ active: method === 'wallet' }"
+            @click="method = 'wallet'"
+          >
+            <i class="fa-solid fa-wallet"></i> Balansdan
+            <span class="rate">0.7%</span>
+          </button>
+          <button
+            class="method"
+            :class="{ active: method === 'payme' }"
+            @click="method = 'payme'"
+          >
+            <i class="fa-solid fa-credit-card"></i> Payme
+            <span class="rate">1.5%</span>
+          </button>
+          <button class="method soon" disabled title="Tez kunda">Click</button>
+          <button class="method soon" disabled title="Tez kunda">Uzum</button>
+        </div>
+
+        <!-- Guest ism (faqat login bo'lmaganda) -->
+        <input
+          v-if="!auth.isAuthenticated"
+          v-model="guestName"
+          type="text"
+          maxlength="64"
+          placeholder="Ismingiz (ixtiyoriy)"
+          class="inp"
+        />
         <input v-model="amount" type="number" :min="profile.min_amount || 1" :placeholder="`Summa (min ${fmtSom(profile.min_amount || 0)} so'm)`" class="inp" />
         <input v-model="message" type="text" maxlength="280" placeholder="Xabar (ixtiyoriy)" class="inp" />
+
+        <!-- Cover-fee -->
+        <label class="cover">
+          <input v-model="coverFee" type="checkbox" />
+          <span>To'liq summa yuborish — streamer <b>{{ fmtSom(Number(amount) || 0) }}</b> so'mni to'liq oladi</span>
+        </label>
+
+        <!-- Hisob-kitob -->
+        <div v-if="Number(amount) > 0" class="calc">
+          <div class="row"><span>Streamer oladi</span><b>{{ fmtSom(netPreview) }} so'm</b></div>
+          <div class="row"><span>Komissiya ({{ (feeRate * 100).toFixed(1) }}%)</span><span>{{ fmtSom(feePreview) }} so'm</span></div>
+          <div class="row total"><span>{{ method === 'wallet' ? 'Balansdan yechiladi' : "To'laysiz" }}</span><b>{{ fmtSom(totalPreview) }} so'm</b></div>
+        </div>
+
         <button class="btn-send" :disabled="sending" @click="donate">
           <i class="fa-solid fa-hand-holding-heart"></i>
-          <template v-if="!auth.isAuthenticated">Kirish va donat</template>
+          <template v-if="method === 'wallet' && !auth.isAuthenticated">Kirish va donat</template>
+          <template v-else-if="method === 'payme'">{{ sending ? '…' : "Payme orqali to'lash" }}</template>
           <template v-else>{{ sending ? 'Yuborilmoqda…' : 'Donat yuborish' }}</template>
         </button>
-        <p class="note">Donat ichki wallet balansingizdan yechiladi.</p>
+        <p v-if="method === 'payme'" class="note">
+          Payme sahifasiga o'tasiz. Ro'yxatdan o'tish shart emas.
+          <template v-if="auth.isAuthenticated"> (Payme orqali W coin berilmaydi)</template>
+        </p>
+        <p v-else class="note">Donat ichki wallet balansingizdan yechiladi.</p>
       </div>
     </div>
   </div>
@@ -150,7 +262,25 @@ onMounted(load)
 .link:hover { transform: translateY(-3px); }
 .donate { margin-top: 18px; text-align: left; }
 .donate h2 { font-size: 1rem; font-weight: 800; margin-bottom: 10px; text-align: center; }
+.methods { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+.method {
+  flex: 1; min-width: 90px; height: 42px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid var(--glass-border, rgba(89,133,189,0.25));
+  color: var(--c-text-dim, #9fb2c8); font-weight: 700; font-size: 0.82rem;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.method.active { color: var(--c-accent, #00d4ff); border-color: rgba(0, 212, 255, 0.55); background: rgba(0, 212, 255, 0.1); }
+.method.soon { opacity: 0.4; cursor: not-allowed; flex: 0 0 auto; padding: 0 12px; }
+.method .rate { font-size: 0.68rem; opacity: 0.7; }
 .inp { width: 100%; height: 46px; margin-bottom: 8px; padding: 0 14px; border-radius: 12px; background: rgba(6, 13, 26, 0.7); border: 1px solid var(--glass-border, rgba(89,133,189,0.25)); color: var(--c-text, #eaf2ff); }
+.cover { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 8px; font-size: 0.82rem; color: var(--c-text-dim, #9fb2c8); cursor: pointer; }
+.cover input { width: 17px; height: 17px; margin-top: 1px; accent-color: var(--c-accent, #00d4ff); flex-shrink: 0; }
+.cover b { color: var(--c-text, #eaf2ff); }
+.calc { padding: 10px 12px; margin-bottom: 8px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); font-size: 0.85rem; }
+.calc .row { display: flex; justify-content: space-between; padding: 2px 0; color: var(--c-text-dim, #9fb2c8); }
+.calc .row b { color: var(--c-text, #eaf2ff); }
+.calc .total { border-top: 1px dashed var(--glass-border); margin-top: 4px; padding-top: 6px; }
+.calc .total b { color: var(--c-accent, #00d4ff); }
 .btn-send { width: 100%; height: 50px; margin-top: 4px; border-radius: 14px; background: var(--c-accent, #00d4ff); color: var(--c-bg-base, #04101f); font-weight: 800; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-send:disabled { opacity: 0.5; }
 .note { text-align: center; font-size: var(--fs-xs, 0.72rem); color: var(--c-text-dim); margin-top: 8px; }

@@ -1,8 +1,9 @@
 <script setup>
 // Mening walletim — balans + tarix + top-up so'rovi (chek yuklash).
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { walletApi } from '../api/wallet.api'
+import { billingApi } from '../api/billing.api'
 import { fmtSom } from '@/shared/utils/money'
 
 const loading = ref(false)
@@ -75,6 +76,40 @@ async function submitTopup() {
 }
 
 const PENDING = 'pending'
+
+// ── PSP (Payme) orqali to'ldirish ──
+const showPsp = ref(false)
+const pspAmount = ref('')
+const pspQuote = ref(null)
+const pspBusy = ref(false)
+let quoteTimer = null
+
+watch(pspAmount, (v) => {
+  clearTimeout(quoteTimer)
+  pspQuote.value = null
+  const amt = Number(v)
+  if (!amt || amt < 1000) return
+  quoteTimer = setTimeout(async () => {
+    try {
+      const { data } = await billingApi.getTopupQuote(amt)
+      pspQuote.value = data
+    } catch { /* jim — quote faqat ko'rsatish uchun */ }
+  }, 350)
+})
+
+async function payWithPsp() {
+  const amt = Number(pspAmount.value)
+  if (!amt || amt < 1000) { toast.error("Minimal 1 000 so'm"); return }
+  pspBusy.value = true
+  try {
+    const { data } = await billingApi.createTopupIntent('payme', amt)
+    window.location.href = data.checkout_url
+  } catch (e) {
+    toast.error(e.response?.data?.error?.message || e.response?.data?.detail || 'Xatolik')
+    pspBusy.value = false
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -83,12 +118,32 @@ onMounted(load)
     <div class="balance-card">
       <div class="bal-label">Balans</div>
       <div class="bal-amount">{{ fmtSom(balance) }} <span class="ccy">so'm</span></div>
-      <button class="btn-topup" @click="showTopup = !showTopup">
-        <i class="fa-solid fa-plus"></i> To'ldirish
+      <div class="topup-btns">
+        <button class="btn-topup" @click="showPsp = !showPsp; showTopup = false">
+          <i class="fa-solid fa-credit-card"></i> Payme
+        </button>
+        <button class="btn-topup ghost" @click="showTopup = !showTopup; showPsp = false">
+          <i class="fa-solid fa-receipt"></i> Kvitansiya
+        </button>
+      </div>
+    </div>
+
+    <!-- PSP (Payme) to'ldirish -->
+    <div v-if="showPsp" class="topup-form">
+      <input v-model="pspAmount" type="number" min="1000" step="1000" placeholder="Summa (so'm)" class="inp" />
+      <div v-if="pspQuote" class="quote">
+        <div class="q-row"><span>Bu hafta komissiyasiz limit</span><span>{{ fmtSom(pspQuote.free_remaining) }} so'm</span></div>
+        <div class="q-row"><span>Komissiya (0.5% ortiqchaga)</span><span>{{ fmtSom(pspQuote.fee) }} so'm</span></div>
+        <div class="q-row total"><span>To'laysiz</span><b>{{ fmtSom(pspQuote.total_charge) }} so'm</b></div>
+        <div class="q-row bonus"><span>W coin bonus (+1%)</span><span>+{{ Number(pspQuote.bonus_coins).toFixed(0) }} W</span></div>
+      </div>
+      <p class="hint">Balansga aynan kiritilgan summa tushadi — komissiya ustiga olinadi. Haftasiga 100 000 so'mgacha komissiyasiz.</p>
+      <button class="btn-submit" :disabled="pspBusy" @click="payWithPsp">
+        {{ pspBusy ? '…' : "Payme orqali to'lash" }}
       </button>
     </div>
 
-    <!-- Top-up formasi -->
+    <!-- Manual (kvitansiya) top-up formasi -->
     <div v-if="showTopup" class="topup-form">
       <input v-model="amount" type="number" min="1000" placeholder="Summa (so'm)" class="inp" />
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
@@ -96,7 +151,7 @@ onMounted(load)
         <i class="fa-solid fa-paperclip"></i>
         {{ receiptName || 'Chek (ixtiyoriy)' }}
       </button>
-      <p class="hint">Platforma kartasiga o'tkazing, so'ng summa + chekni yuboring. Admin tasdiqlaydi.</p>
+      <p class="hint">Platforma kartasiga o'tkazing, so'ng summa + chekni yuboring. Admin tasdiqlaydi. Tasdiqda +1% W bonus.</p>
       <button class="btn-submit" :disabled="submitting" @click="submitTopup">
         {{ submitting ? 'Yuborilmoqda…' : "So'rov yuborish" }}
       </button>
@@ -138,10 +193,21 @@ onMounted(load)
 .bal-label { font-size: var(--fs-sm, 0.85rem); color: var(--c-text-dim, #9fb2c8); }
 .bal-amount { font-size: 2rem; font-weight: 900; color: var(--c-text, #eaf2ff); margin: 4px 0 12px; }
 .ccy { font-size: 0.9rem; font-weight: 700; color: var(--c-text-dim, #9fb2c8); }
+.topup-btns { display: flex; gap: 8px; justify-content: center; }
 .btn-topup {
   padding: 9px 20px; border-radius: 999px; font-weight: 800;
   background: var(--c-accent, #00d4ff); color: var(--c-bg-base, #04101f); border: none;
+  display: inline-flex; align-items: center; gap: 6px;
 }
+.btn-topup.ghost {
+  background: rgba(89, 133, 189, 0.15); color: var(--c-text, #eaf2ff);
+  border: 1px solid var(--glass-border, rgba(89,133,189,0.25));
+}
+.quote { padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); font-size: 0.85rem; }
+.q-row { display: flex; justify-content: space-between; padding: 2px 0; color: var(--c-text-dim, #9fb2c8); }
+.q-row.total { border-top: 1px dashed var(--glass-border); margin-top: 4px; padding-top: 6px; }
+.q-row.total b { color: var(--c-accent, #00d4ff); }
+.q-row.bonus span:last-child { color: var(--c-warning, #f59e0b); font-weight: 700; }
 .topup-form { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--glass-border); border-radius: var(--r-md, 14px); background: rgba(6, 13, 26, 0.4); }
 .inp { height: 42px; padding: 0 14px; border-radius: 10px; background: rgba(6, 13, 26, 0.6); border: 1px solid var(--glass-border); color: var(--c-text); }
 .btn-receipt { height: 42px; border-radius: 10px; background: rgba(89, 133, 189, 0.15); border: 1px dashed var(--glass-border); color: var(--c-text-dim); text-align: left; padding: 0 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
