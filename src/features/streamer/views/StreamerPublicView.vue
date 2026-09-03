@@ -9,6 +9,7 @@ import { toast } from 'vue-sonner'
 import { streamerApi, STREAM_PLATFORMS } from '../api/streamer.api'
 import { donationsApi } from '@/features/donations/api/donations.api'
 import { billingApi, PSP_DONATION_RATE, WALLET_DONATION_RATE } from '@/features/wallet/api/billing.api'
+import { walletApi } from '@/features/wallet/api/wallet.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fmtSom } from '@/shared/utils/money'
 
@@ -64,8 +65,31 @@ async function load() {
     loading.value = false
   }
   // Login user default: balansdan (arzonroq)
-  if (auth.isAuthenticated) method.value = 'wallet'
+  if (auth.isAuthenticated) {
+    method.value = 'wallet'
+    loadBalance()
+  }
 }
+
+// Donatorning o'z wallet balansi — "Balansdan" tanlanganda ko'rinadi, shunda
+// yetadimi-yo'qmi donat yuborishdan OLDIN bilinadi.
+const balance = ref(null)
+async function loadBalance() {
+  try {
+    const { data } = await walletApi.get()
+    balance.value = Number(data?.balance) || 0
+  } catch {
+    balance.value = null   // olinmasa — jimgina yashiramiz
+  }
+}
+
+// Balans yetadimi (faqat wallet usuli uchun ma'noli)
+const notEnough = computed(() => (
+  method.value === 'wallet'
+  && balance.value !== null
+  && Number(amount.value) > 0
+  && totalPreview.value > balance.value
+))
 
 function validAmount() {
   const amt = Number(amount.value)
@@ -184,6 +208,20 @@ onMounted(load)
           <button class="method soon" disabled title="Tez kunda">Uzum</button>
         </div>
 
+        <!-- Donatorning balansi — "Balansdan" tanlanganda doim ko'rinib turadi,
+             shunda yetadimi-yo'qmi yuborishdan oldin bilinadi. -->
+        <div
+          v-if="method === 'wallet' && auth.isAuthenticated && balance !== null"
+          class="bal"
+          :class="{ low: notEnough }"
+        >
+          <span><i class="fa-solid fa-wallet"></i> Balansingiz</span>
+          <b>{{ fmtSom(balance) }} so'm</b>
+        </div>
+        <p v-if="notEnough" class="bal-warn">
+          Balans yetarli emas — {{ fmtSom(totalPreview - balance) }} so'm yetishmayapti.
+        </p>
+
         <!-- Guest ism (faqat login bo'lmaganda) -->
         <input
           v-if="!auth.isAuthenticated"
@@ -209,7 +247,7 @@ onMounted(load)
           <div class="row total"><span>{{ method === 'wallet' ? 'Balansdan yechiladi' : "To'laysiz" }}</span><b>{{ fmtSom(totalPreview) }} so'm</b></div>
         </div>
 
-        <button class="btn-send" :disabled="sending" @click="donate">
+        <button class="btn-send" :disabled="sending || notEnough" @click="donate">
           <i class="fa-solid fa-hand-holding-heart"></i>
           <template v-if="method === 'wallet' && !auth.isAuthenticated">Kirish va donat</template>
           <template v-else-if="method === 'payme'">{{ sending ? '…' : "Payme orqali to'lash" }}</template>
@@ -273,6 +311,19 @@ onMounted(load)
 .method.soon { opacity: 0.4; cursor: not-allowed; flex: 0 0 auto; padding: 0 12px; }
 .method .rate { font-size: 0.68rem; opacity: 0.7; }
 .inp { width: 100%; height: 46px; margin-bottom: 8px; padding: 0 14px; border-radius: 12px; background: rgba(6, 13, 26, 0.7); border: 1px solid var(--glass-border, rgba(89,133,189,0.25)); color: var(--c-text, #eaf2ff); }
+/* Donator balansi — "Balansdan" usulida doim ko'rinadi */
+.bal {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 8px; padding: 9px 12px;
+  border-radius: 10px;
+  background: rgba(0, 212, 255, 0.08);
+  border: 1px solid rgba(0, 212, 255, 0.28);
+  font-size: 0.85rem; color: var(--c-text-dim, #9fb2c8);
+}
+.bal b { color: var(--c-accent, #00d4ff); font-size: 0.95rem; }
+.bal.low { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.4); }
+.bal.low b { color: #ef4444; }
+.bal-warn { margin: -4px 0 8px; font-size: 0.78rem; color: #ef4444; }
 .cover { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0 8px; font-size: 0.82rem; color: var(--c-text-dim, #9fb2c8); cursor: pointer; }
 .cover input { width: 17px; height: 17px; margin-top: 1px; accent-color: var(--c-accent, #00d4ff); flex-shrink: 0; }
 .cover b { color: var(--c-text, #eaf2ff); }

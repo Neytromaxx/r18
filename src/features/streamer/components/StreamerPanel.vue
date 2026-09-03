@@ -17,6 +17,7 @@ const settings = ref({
   show_amount: true,
   show_message: true,
   sound_enabled: true,
+  sound_duration: 0,        // 0 = alert davomiyligi bilan teng
   tts_enabled: false,
   tts_max_chars: 200,
   tts_max_repeat: 5,
@@ -88,6 +89,7 @@ async function saveProfile() {
         show_amount: !!settings.value.show_amount,
         show_message: !!settings.value.show_message,
         sound_enabled: !!settings.value.sound_enabled,
+        sound_duration: Number(settings.value.sound_duration) || 0,
         tts_enabled: !!settings.value.tts_enabled,
         tts_max_chars: Number(settings.value.tts_max_chars) || 200,
         tts_max_repeat: Number(settings.value.tts_max_repeat) || 5,
@@ -234,6 +236,21 @@ onMounted(load)
       <!-- Summa uchun ovoz/musiqa -->
       <label class="lbl">Summa uchun ovoz/musiqa</label>
       <p class="hint">Masalan 10 000 → Akon - Ghetto. Eng mos (yuqori) daraja ijro etiladi.</p>
+      <div class="set-row">
+        <span class="set-lbl">Musiqa davomiyligi (sek)</span>
+        <input
+          v-model.number="settings.sound_duration"
+          type="number"
+          min="0"
+          max="120"
+          class="inp num"
+          placeholder="0"
+        />
+      </div>
+      <p class="hint">
+        <b>0</b> — alert davomiyligi bilan teng ({{ settings.alert_duration || 8 }} sek).
+        Boshqa qiymat kiritilsa, musiqa o'sha sekunddan keyin ohista pasayib to'xtaydi.
+      </p>
       <div class="tiers">
         <div v-for="(t, i) in tiers" :key="i" class="tier">
           <input v-model.number="t.min_amount" type="number" min="1000" step="1000" class="inp num" placeholder="summa" />
