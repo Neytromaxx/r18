@@ -81,6 +81,28 @@ function playServerTts(donationId, enabled) {
   }, 1800)
 }
 
+// Musiqani berilgan vaqtdan keyin to'xtatadi. Keskin uzilmasligi uchun
+// oxirgi ~0.6s da ovoz ohista pasayadi (fade-out).
+const FADE_MS = 600
+function stopAudioAfter(audio, totalMs) {
+  const ms = Math.max(500, Number(totalMs) || 0)
+  const fadeAt = Math.max(0, ms - FADE_MS)
+  setTimeout(() => {
+    const step = 50
+    const startVol = audio.volume
+    let elapsed = 0
+    const timer = setInterval(() => {
+      elapsed += step
+      const v = startVol * (1 - elapsed / FADE_MS)
+      audio.volume = v > 0 ? v : 0
+      if (elapsed >= FADE_MS) {
+        clearInterval(timer)
+        try { audio.pause(); audio.currentTime = 0 } catch { /* ignore */ }
+      }
+    }, step)
+  }, fadeAt)
+}
+
 function pushAlert(p) {
   const s = p?.settings || {}
   const durationMs = (Number(s.alert_duration) || 8) * 1000
@@ -98,10 +120,19 @@ function pushAlert(p) {
     showMessage: s.show_message !== false,
   })
 
-  // Ovoz: summa darajasi bo'lsa — o'sha musiqa; aks holda default ding
+  // Ovoz: summa darajasi bo'lsa — o'sha musiqa; aks holda default ding.
+  // Musiqa cheksiz yangramasin: sound_duration sekunddan keyin (0 bo'lsa —
+  // alert bilan birga) ohista pasayib to'xtaydi.
   const tierUrl = pickTierUrl(s.sound_tiers, amountNum)
   if (tierUrl) {
-    try { new Audio(tierUrl).play() } catch { /* ignore */ }
+    try {
+      const audio = new Audio(tierUrl)
+      audio.play()
+      const soundMs = (Number(s.sound_duration) || 0) > 0
+        ? Number(s.sound_duration) * 1000
+        : durationMs
+      stopAudioAfter(audio, soundMs)
+    } catch { /* ignore */ }
   } else if (s.sound_enabled !== false) {
     playDing()
   }
@@ -139,8 +170,24 @@ function scheduleReconnect() {
   reconnectTimer = setTimeout(connect, delay)
 }
 
-onMounted(connect)
+// OBS uchun SHAFFOF fon. global.css da `body { background: var(--c-bg-base) }`
+// bor — u overlay'ni to'q rangli to'rtburchakka aylantirib, stream ustidagi
+// tasvirni to'sib qo'yardi. Faqat shu sahifada bekor qilamiz.
+const TRANSPARENT_TARGETS = () => [
+  document.documentElement,
+  document.body,
+  document.getElementById('app'),
+].filter(Boolean)
+let prevBg = []
+
+onMounted(() => {
+  prevBg = TRANSPARENT_TARGETS().map((el) => [el, el.style.background])
+  for (const [el] of prevBg) el.style.setProperty('background', 'transparent', 'important')
+  connect()
+})
+
 onUnmounted(() => {
+  for (const [el, bg] of prevBg) el.style.background = bg
   closed = true
   clearInterval(heartbeat)
   clearTimeout(reconnectTimer)
@@ -176,32 +223,55 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding-top: 8vh;
+  /* Alert TEPADA turadi — OBS'da manba to'rtburchagining yuqori qismiga
+     qadaladi, shunda streamer uni xohlagan joyiga aniq qo'ya oladi. */
+  justify-content: flex-start;
+  gap: 2%;
+  padding: 2% 2% 0;
   pointer-events: none;
   overflow: hidden;
 }
 .ov-card {
-  min-width: 320px;
-  max-width: 70vw;
+  /* MUHIM: qattiq min-width YO'Q. Ilgari `min-width: 320px` edi va OBS'da
+     Browser Source eni 320px dan kichik bo'lsa karta sig'may, `overflow:
+     hidden` uni qirqib tashlardi — alert umuman ko'rinmasdi. Endi manba
+     qanday o'lchamda bo'lsa ham to'liq sig'adi. */
+  width: 100%;
+  max-width: 560px;
+  box-sizing: border-box;
   text-align: center;
-  padding: 22px 32px;
+  padding: 4% 5%;
   border-radius: 20px;
   background: linear-gradient(135deg, rgba(0, 212, 255, 0.9), rgba(89, 71, 226, 0.9));
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 212, 255, 0.5);
   color: #fff;
   font-family: system-ui, sans-serif;
 }
+/* O'lchamlar vw bilan — OBS'da Browser Source kichik bo'lsa ham karta
+   proporsional qisqaradi (ilgari qattiq px edi va sig'masdi). */
 .ov-coin {
-  width: 64px; height: 64px; margin: 0 auto 8px;
+  width: clamp(28px, 11vw, 64px);
+  height: clamp(28px, 11vw, 64px);
+  margin: 0 auto 2%;
   border-radius: 50%; display: grid; place-items: center;
-  font-size: 30px; color: #ffd54a; background: rgba(0, 0, 0, 0.2);
+  font-size: clamp(14px, 5.5vw, 30px);
+  color: #ffd54a; background: rgba(0, 0, 0, 0.2);
   animation: ov-bounce 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ov-from { font-size: 1.4rem; font-weight: 900; text-shadow: 0 2px 6px rgba(0,0,0,0.4); }
-.ov-amount { font-size: 2.6rem; font-weight: 900; line-height: 1.1; margin: 2px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-.ov-amount span { font-size: 1.1rem; opacity: 0.85; }
-.ov-msg { font-size: 1.15rem; margin-top: 4px; opacity: 0.95; word-break: break-word; }
+.ov-from {
+  font-size: clamp(0.75rem, 4vw, 1.4rem);
+  font-weight: 900; text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.ov-amount {
+  font-size: clamp(1.2rem, 7.5vw, 2.6rem);
+  font-weight: 900; line-height: 1.1; margin: 1% 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.ov-amount span { font-size: clamp(0.6rem, 3vw, 1.1rem); opacity: 0.85; }
+.ov-msg {
+  font-size: clamp(0.65rem, 3.3vw, 1.15rem);
+  margin-top: 2%; opacity: 0.95; word-break: break-word;
+}
 .ov-link {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 1px 8px; margin: 0 2px; border-radius: 6px;
