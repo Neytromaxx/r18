@@ -54,15 +54,22 @@ function playDing() {
 }
 
 // Summa uchun eng mos (yuqori) ovoz darajasini tanlaydi
-function pickTierUrl(tiers, amount) {
+// Summaga mos eng yuqori darajani qaytaradi (ovoz + boshlanish nuqtasi +
+// media birgalikda saqlanadi). Daraja faqat media bo'lsa ham hisobga olinadi.
+function pickTier(tiers, amount) {
   if (!Array.isArray(tiers)) return null
   let best = null
   for (const t of tiers) {
-    if (t?.url && amount >= Number(t.min_amount || 0)) {
-      if (!best || Number(t.min_amount) >= Number(best.min_amount)) best = t
-    }
+    if (!t || (!t.url && !t.media_url)) continue
+    if (amount < Number(t.min_amount || 0)) continue
+    if (!best || Number(t.min_amount) >= Number(best.min_amount)) best = t
   }
-  return best?.url || null
+  return best
+}
+
+// Media turi — kengaytmaga qarab rasm/GIF yoki video
+function mediaKind(url) {
+  return /\.(mp4|webm|mov|m4v)(\?|#|$)/i.test(String(url || '')) ? 'video' : 'image'
 }
 
 // Server TTS — /streamer/tts?token=&donation_id= MP3 qaytaradi (OBS brauzerida
@@ -108,6 +115,8 @@ function pushAlert(p) {
   const durationMs = (Number(s.alert_duration) || 8) * 1000
   const amountNum = Number(p?.amount) || 0
   const id = ++seq
+  // Summaga mos daraja — ham ovoz (url/start_at), ham media shu yerdan olinadi
+  const tier = pickTier(s.sound_tiers, amountNum)
   alerts.value.push({
     id,
     from: p?.from_name || 'Anonim',
@@ -118,15 +127,26 @@ function pushAlert(p) {
       : ((p?.message || '').trim() ? [{ t: 'text', v: p.message.trim() }] : []),
     showAmount: s.show_amount !== false,
     showMessage: s.show_message !== false,
+    // Streamer shu daraja uchun rasm/GIF qo'ygan bo'lsa — sikkacha o'rniga
+    // o'sha ko'rsatiladi (ism/summa/xabar joyida qoladi).
+    media: tier?.media_url || '',
+    mediaKind: tier?.media_url ? mediaKind(tier.media_url) : '',
   })
 
   // Ovoz: summa darajasi bo'lsa — o'sha musiqa; aks holda default ding.
   // Musiqa cheksiz yangramasin: sound_duration sekunddan keyin (0 bo'lsa —
   // alert bilan birga) ohista pasayib to'xtaydi.
-  const tierUrl = pickTierUrl(s.sound_tiers, amountNum)
-  if (tierUrl) {
+  if (tier?.url) {
     try {
-      const audio = new Audio(tierUrl)
+      const audio = new Audio(tier.url)
+      // Musiqani belgilangan sekunddan boshlaymiz (qo'shiqning "eng qizigi").
+      // currentTime faqat metadata yuklangach ishonchli o'rnatiladi.
+      const startAt = Number(tier.start_at) || 0
+      if (startAt > 0) {
+        const seek = () => { try { audio.currentTime = startAt } catch { /* ignore */ } }
+        if (audio.readyState >= 1) seek()
+        else audio.addEventListener('loadedmetadata', seek, { once: true })
+      }
       audio.play()
       const soundMs = (Number(s.sound_duration) || 0) > 0
         ? Number(s.sound_duration) * 1000
@@ -199,7 +219,18 @@ onUnmounted(() => {
   <div class="overlay-root">
     <TransitionGroup name="ov-pop">
       <div v-for="a in alerts" :key="a.id" class="ov-card">
-        <div class="ov-coin"><i class="fa-solid fa-sack-dollar"></i></div>
+        <!-- Streamer qo'ygan rasm/GIF/video — bo'lmasa oddiy sikkacha -->
+        <video
+          v-if="a.media && a.mediaKind === 'video'"
+          class="ov-media"
+          :src="a.media"
+          autoplay
+          muted
+          loop
+          playsinline
+        ></video>
+        <img v-else-if="a.media" class="ov-media" :src="a.media" alt="" />
+        <div v-else class="ov-coin"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="ov-from">{{ a.from }}</div>
         <div v-if="a.showAmount" class="ov-amount">{{ a.amount }} <span>so'm</span></div>
         <div v-if="a.showMessage && a.segments.length" class="ov-msg">
@@ -257,6 +288,19 @@ onUnmounted(() => {
   font-size: clamp(14px, 5.5vw, 30px);
   color: #ffd54a; background: rgba(0, 0, 0, 0.2);
   animation: ov-bounce 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Streamer media'si — kartaning eniga sig'adi, balandligi cheklangan
+   (aks holda uzun rasm butun manbani egallab, matnni siqib chiqarardi). */
+.ov-media {
+  display: block;
+  width: 100%;
+  /* Balandlik cheklangan: ism/summa/xabarga joy qolsin. Aks holda baland
+     rasm kartani manbadan chiqarib, `overflow: hidden` xabarni kesardi. */
+  max-height: 38vh;
+  margin: 0 auto 3%;
+  border-radius: 14px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.15);
 }
 .ov-from {
   font-size: clamp(0.75rem, 4vw, 1.4rem);

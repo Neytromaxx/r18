@@ -77,9 +77,16 @@ async function saveProfile() {
     for (const [k, v] of Object.entries(links.value)) {
       if (v && v.trim()) cleanLinks[k] = v.trim()
     }
+    // Daraja ovoz YOKI media bo'lsa saqlanadi (faqat rasmli, ovozsiz alert ham mumkin)
     const cleanTiers = tiers.value
-      .filter((t) => t.url && Number(t.min_amount) > 0)
-      .map((t) => ({ min_amount: Number(t.min_amount), url: t.url, label: (t.label || '').trim() }))
+      .filter((t) => (t.url || t.media_url) && Number(t.min_amount) > 0)
+      .map((t) => ({
+        min_amount: Number(t.min_amount),
+        url: t.url || '',
+        start_at: Number(t.start_at) || 0,
+        media_url: t.media_url || '',
+        label: (t.label || '').trim(),
+      }))
     const { data } = await streamerApi.updateProfile({
       displayName: name.value.trim(),
       links: cleanLinks,
@@ -118,7 +125,7 @@ function copyPublic() {
 
 // ── Ovoz darajalari (summa uchun musiqa) ──
 function addTier() {
-  tiers.value.push({ min_amount: 10000, url: '', label: '' })
+  tiers.value.push({ min_amount: 10000, url: '', start_at: 0, media_url: '', label: '' })
 }
 function removeTier(i) {
   tiers.value.splice(i, 1)
@@ -141,6 +148,29 @@ async function uploadTierAudio(i, e) {
     uploadingTier.value = -1
   }
 }
+// Alert uchun rasm/GIF (yoki tashqi video URL) — daraja bo'yicha
+const uploadingMedia = ref(-1)
+async function uploadTierMedia(i, e) {
+  const f = e.target.files?.[0]
+  e.target.value = ''
+  if (!f) return
+  if (!f.type.startsWith('image/')) { toast.error('Faqat rasm yoki GIF'); return }
+  if (f.size > 5 * 1024 * 1024) { toast.error('Rasm juda katta (maks 5 MB)'); return }
+  uploadingMedia.value = i
+  try {
+    const { data } = await streamerApi.uploadMedia(f)
+    tiers.value[i].media_url = data?.url || ''
+    toast.success('Media yuklandi')
+  } catch (err) {
+    toast.error(err.response?.data?.detail || 'Yuklanmadi')
+  } finally {
+    uploadingMedia.value = -1
+  }
+}
+function clearTierMedia(i) {
+  tiers.value[i].media_url = ''
+}
+
 function testTier(t) {
   if (!t.url) return
   try { new Audio(t.url).play() } catch { /* ignore */ }
@@ -235,7 +265,12 @@ onMounted(load)
 
       <!-- Summa uchun ovoz/musiqa -->
       <label class="lbl">Summa uchun ovoz/musiqa</label>
-      <p class="hint">Masalan 10 000 → Akon - Ghetto. Eng mos (yuqori) daraja ijro etiladi.</p>
+      <p class="hint">
+        Masalan 10 000 → Akon - Ghetto. Eng mos (yuqori) daraja ijro etiladi.
+        Uchinchi maydon — musiqa qaysi <b>sekunddan</b> boshlanishi (0 = boshidan).
+        <i class="fa-regular fa-image"></i> tugmasi orqali shu darajaga <b>rasm/GIF</b>
+        qo'ysangiz, alertda sikkacha o'rniga o'sha ko'rinadi (ism, summa va xabar joyida qoladi).
+      </p>
       <div class="set-row">
         <span class="set-lbl">Musiqa davomiyligi (sek)</span>
         <input
@@ -255,12 +290,28 @@ onMounted(load)
         <div v-for="(t, i) in tiers" :key="i" class="tier">
           <input v-model.number="t.min_amount" type="number" min="1000" step="1000" class="inp num" placeholder="summa" />
           <input v-model="t.label" type="text" maxlength="80" class="inp" placeholder="Nomi (ixtiyoriy)" />
+          <input
+            v-model.number="t.start_at"
+            type="number"
+            min="0"
+            max="3600"
+            class="inp num"
+            placeholder="0 sek"
+            title="Musiqa qaysi sekunddan boshlansin (0 = boshidan)"
+          />
           <label class="btn-mini" :class="{ ok: t.url }" title="Audio yuklash">
             <i v-if="uploadingTier === i" class="fa-solid fa-spinner fa-spin"></i>
             <i v-else :class="t.url ? 'fa-solid fa-check' : 'fa-solid fa-upload'"></i>
             <input type="file" accept="audio/*" class="hidden" @change="(e) => uploadTierAudio(i, e)" />
           </label>
           <button v-if="t.url" class="btn-mini" @click="testTier(t)" title="Tinglash"><i class="fa-solid fa-play"></i></button>
+          <!-- Alert uchun rasm/GIF -->
+          <label class="btn-mini" :class="{ ok: t.media_url }" title="Rasm/GIF yuklash">
+            <i v-if="uploadingMedia === i" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else :class="t.media_url ? 'fa-solid fa-image' : 'fa-regular fa-image'"></i>
+            <input type="file" accept="image/*" class="hidden" @change="(e) => uploadTierMedia(i, e)" />
+          </label>
+          <button v-if="t.media_url" class="btn-mini danger" @click="clearTierMedia(i)" title="Rasmni olib tashlash"><i class="fa-solid fa-xmark"></i></button>
           <button class="btn-mini danger" @click="removeTier(i)" title="O'chirish"><i class="fa-solid fa-trash"></i></button>
         </div>
         <button class="btn-add" @click="addTier"><i class="fa-solid fa-plus"></i> Daraja qo'shish</button>

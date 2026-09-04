@@ -3,6 +3,12 @@
 import { ref, onMounted } from 'vue'
 import { donationsApi } from '../api/donations.api'
 import { fmtSom } from '@/shared/utils/money'
+import { linkify } from '@/shared/utils/linkify'
+import { LINK_PLATFORM_ICON } from '@/features/streamer/api/streamer.api'
+
+function linkIcon(platform) {
+  return LINK_PLATFORM_ICON[platform] || LINK_PLATFORM_ICON.web
+}
 
 const loading = ref(false)
 const items = ref([])
@@ -34,7 +40,22 @@ defineExpose({ load })
         <div class="coin"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="body">
           <div class="amt">{{ fmtSom(d.net) }} <span class="ccy">so'm</span></div>
-          <div v-if="d.message" class="msg">"{{ d.message }}"</div>
+          <!-- Xabar: havolalar ajratib ko'rsatiladi va yangi oynada ochiladi.
+               v-html emas — segmentlar oddiy matn, XSS xavfi yo'q. -->
+          <div v-if="d.message" class="msg">
+            <template v-for="(seg, si) in linkify(d.message)" :key="si">
+              <a
+                v-if="seg.t === 'link'"
+                class="msg-link"
+                :href="seg.href"
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                :title="seg.href"
+                :style="{ color: linkIcon(seg.platform).color }"
+              ><i :class="linkIcon(seg.platform).icon"></i> {{ seg.v }}</a>
+              <span v-else>{{ seg.v }}</span>
+            </template>
+          </div>
         </div>
       </div>
     </div>
@@ -51,4 +72,16 @@ defineExpose({ load })
 .amt { font-weight: 900; font-size: 1.15rem; color: var(--c-text, #eaf2ff); }
 .ccy { font-size: 0.78rem; font-weight: 700; color: var(--c-text-dim); }
 .msg { font-size: var(--fs-sm); color: var(--c-text); margin-top: 2px; word-break: break-word; }
+/* Havola — chip ko'rinishida, platforma ikonkasi bilan */
+.msg-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 7px; margin: 0 2px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: middle;
+  word-break: break-all;
+}
+.msg-link:hover { background: rgba(255, 255, 255, 0.16); text-decoration: underline; }
 </style>
