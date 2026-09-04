@@ -37,6 +37,15 @@ export const streamerApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+  // POST /uploads/image — alert uchun rasm/GIF (Cloudinary) → { url }
+  uploadMedia(file) {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('folder', 'donation-media')
+    return api.post('/uploads/image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+  },
 }
 
 // Overlay xabar segmentidagi link platformasi → ikonка/rang
