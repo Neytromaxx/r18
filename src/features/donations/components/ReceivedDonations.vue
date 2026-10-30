@@ -3,6 +3,7 @@
 import { ref, onMounted } from 'vue'
 import { donationsApi } from '../api/donations.api'
 import { fmtSom } from '@/shared/utils/money'
+import { formatDate } from '@/shared/utils/format'
 import { linkify } from '@/shared/utils/linkify'
 import { LINK_PLATFORM_ICON } from '@/features/streamer/api/streamer.api'
 
@@ -39,7 +40,15 @@ defineExpose({ load })
       <div v-for="d in items" :key="d.id" class="card">
         <div class="coin"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="body">
-          <div class="amt">{{ fmtSom(d.net) }} <span class="ccy">so'm</span></div>
+          <div class="top-line">
+            <div class="amt">
+              +{{ fmtSom(d.net) }} <span class="ccy">so'm</span>
+              <span v-if="d.cover_fee" class="covered-chip" title="Komissiya donator tomonidan qoplangan">
+                100% to'liq
+              </span>
+            </div>
+            <span v-if="d.created_at" class="time">{{ formatDate(d.created_at) }}</span>
+          </div>
           <!-- Xabar: havolalar ajratib ko'rsatiladi va yangi oynada ochiladi.
                v-html emas — segmentlar oddiy matn, XSS xavfi yo'q. -->
           <div v-if="d.message" class="msg">
@@ -67,12 +76,15 @@ defineExpose({ load })
 .muted i { font-size: 28px; opacity: 0.5; }
 .muted p { margin-top: 8px; }
 .list { display: flex; flex-direction: column; gap: 10px; }
-.card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md, 14px); background: rgba(6, 13, 26, 0.4); border: 1px solid var(--glass-border, rgba(89,133,189,0.25)); }
+.card { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md, 14px); background: rgba(6, 13, 26, 0.45); border: 1px solid var(--glass-border, rgba(89,133,189,0.25)); }
 .coin { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; color: var(--c-warning, #f59e0b); background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); flex-shrink: 0; }
-.amt { font-weight: 900; font-size: 1.15rem; color: var(--c-text, #eaf2ff); }
+.body { flex: 1; min-width: 0; }
+.top-line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.amt { font-weight: 900; font-size: 1.12rem; color: #4ade80; display: inline-flex; align-items: center; gap: 6px; }
 .ccy { font-size: 0.78rem; font-weight: 700; color: var(--c-text-dim); }
-.msg { font-size: var(--fs-sm); color: var(--c-text); margin-top: 2px; word-break: break-word; }
-/* Havola — chip ko'rinishida, platforma ikonkasi bilan */
+.covered-chip { font-size: 0.66rem; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: rgba(0, 212, 255, 0.14); color: var(--c-accent, #00d4ff); }
+.time { font-size: 0.72rem; color: var(--c-text-dim, #8fa8c8); }
+.msg { font-size: var(--fs-sm); color: var(--c-text); margin-top: 3px; word-break: break-word; }
 .msg-link {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 1px 7px; margin: 0 2px;

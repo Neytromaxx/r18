@@ -3,14 +3,28 @@ import { api } from '@/app/api/client'
 export const donationsApi = {
   // POST /donations — donat yuborish. player uchun recipient_public_id (qidiruvdan)
   // yoki recipient_id (UUID). team/tournament uchun recipient_id.
-  donate({ recipient_type, recipient_id = null, recipient_public_id = null, amount, message = null }) {
-    return api.post('/donations', {
-      recipient_type,
-      ...(recipient_id ? { recipient_id } : {}),
-      ...(recipient_public_id ? { recipient_public_id } : {}),
-      amount,
-      ...(message ? { message } : {}),
-    })
+  // cover_fee: true bo'lsa komissiya (0.7%) donator balansidan ustiga yechiladi
+  // va streamerga to'liq kiritilgan summa boradi.
+  donate({
+    recipient_type,
+    recipient_id = null,
+    recipient_public_id = null,
+    amount,
+    message = null,
+    cover_fee = false,
+  }) {
+    return api.post(
+      '/donations',
+      {
+        recipient_type,
+        ...(recipient_id ? { recipient_id } : {}),
+        ...(recipient_public_id ? { recipient_public_id } : {}),
+        amount,
+        ...(message ? { message } : {}),
+        cover_fee: Boolean(cover_fee),
+      },
+      { headers: { 'Idempotency-Key': crypto.randomUUID() } },
+    )
   },
   // GET /donations/sent — men yuborgan donatlar
   sent() {
