@@ -41,6 +41,10 @@ export const routes = [
     component: DonationLayout,
     children: [
       { path: '', name: 'home', component: () => import('@/features/home/views/HomeView.vue') },
+      // Streamer qidiruvi — "Donat yuborish" (auth'siz)
+      { path: 'find', name: 'find', component: () => import('@/features/streamer/views/FindStreamerView.vue') },
+      // Ommaviy oferta va maxfiylik siyosati (matn egasidan)
+      { path: 'legal/:doc(offer|privacy)', name: 'legal', component: () => import('@/features/legal/views/LegalView.vue') },
       { path: 'hub', name: 'hub', component: () => import('@/features/donations/views/DonationHubView.vue'), meta: { requiresAuth: true } },
       { path: 'cabinet', name: 'cabinet', component: () => import('@/features/streamer/views/CabinetView.vue'), meta: { requiresAuth: true } },
       { path: 'profile', name: 'profile', component: () => import('@/features/profile/views/ProfileView.vue'), meta: { requiresAuth: true } },

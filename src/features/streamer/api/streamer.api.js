@@ -24,6 +24,11 @@ export const streamerApi = {
   regenerateToken() {
     return api.post('/streamer/me/regenerate-token')
   },
+  // GET /streamer/search?q= — streamer qidiruvi (public, maks. 10)
+  // → [{ public_id, display_name, nickname }]
+  search(q) {
+    return api.get('/streamer/search', { params: { q } })
+  },
   // GET /streamer/public/{publicId} — public streamer sahifasi (auth'siz)
   publicProfile(publicId) {
     return api.get(`/streamer/public/${publicId}`)

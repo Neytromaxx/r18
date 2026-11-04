@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import SiteFooter from '@/shared/components/SiteFooter.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -9,9 +10,9 @@ function startStreamer() {
   if (auth.isAuthenticated) router.push('/cabinet')
   else router.push({ name: 'login', query: { redirect: '/cabinet' } })
 }
-function goHub() {
-  if (auth.isAuthenticated) router.push('/hub')
-  else router.push({ name: 'login', query: { redirect: '/hub' } })
+// Tomoshabin roʻyxatdan oʻtmasdan streamerni topib toʻlaydi
+function goFind() {
+  router.push('/find')
 }
 </script>
 
@@ -28,7 +29,7 @@ function goHub() {
         <button class="btn-primary press" @click="startStreamer">
           <i class="fa-solid fa-tower-broadcast"></i> Streamer bo'lish
         </button>
-        <button class="btn-ghost press" @click="goHub">
+        <button class="btn-ghost press" data-test="home-donate" @click="goFind">
           <i class="fa-solid fa-hand-holding-heart"></i> Donat yuborish
         </button>
       </div>
@@ -52,6 +53,8 @@ function goHub() {
         <p>Tomoshabinlar sahifangizdan donat yuboradi — alert jonli efirda chiqadi.</p>
       </div>
     </section>
+
+    <SiteFooter />
   </div>
 </template>
 

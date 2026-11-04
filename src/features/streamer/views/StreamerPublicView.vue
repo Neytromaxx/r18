@@ -18,6 +18,7 @@ import { billingApi } from '@/features/wallet/api/billing.api'
 import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fmtSom } from '@/shared/utils/money'
 import DonationAlert from '@/features/donations/components/DonationAlert.vue'
+import SiteFooter from '@/shared/components/SiteFooter.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,18 +53,38 @@ const presetAmounts = computed(() => {
   const base = [2000, 5000, 10000, 25000, 50000, 100000]
   const filtered = base.filter((v) => v >= min)
   if (!filtered.includes(min)) filtered.unshift(min)
-  return filtered.slice(0, 5)
+  // 6 ta — telefonda 3×2 (yolgʻiz chip qolmaydi)
+  return filtered.slice(0, 6)
 })
+
+// Summa darajalari (streamer kabinetida sozlaydi): musiqa / rasm / GIF
+const tiers = computed(() =>
+  (profile.value?.tiers || []).filter((t) => Number(t.min_amount) >= minAmount.value),
+)
+const tierMins = computed(() => new Set(tiers.value.map((t) => Number(t.min_amount))))
+
+// Avatar: rasm boʻlmasa — ismning birinchi harfi
+const initial = computed(() =>
+  (profile.value?.display_name || '?').trim().charAt(0).toUpperCase(),
+)
 
 function pickPreset(val) {
   amount.value = String(val)
 }
 
-// Summa — faqat butun soʻm (backend kasrni rad etadi)
+// Summa — faqat butun soʻm (backend kasrni rad etadi). Maydonda
+// "10 000" koʻrinishida, ichida — raqamlar.
 const amountNum = computed(() => {
   const n = Number(String(amount.value).replace(/\D/g, ''))
   return Number.isFinite(n) ? n : 0
 })
+const amountDisplay = computed(() => (amountNum.value > 0 ? fmtSom(amountNum.value) : ''))
+function onAmountInput(e) {
+  const digits = String(e.target.value).replace(/\D/g, '').slice(0, 9)
+  amount.value = digits
+  // Kursor oxirida qolsin: formatlangan qiymatni darhol qaytaramiz
+  e.target.value = digits ? fmtSom(Number(digits)) : ''
+}
 
 // Stavka kartada: auth holatiga qarab (profil javobidagi `fees`)
 const fees = computed(() => profile.value?.fees || {})
@@ -235,11 +256,18 @@ onMounted(load)
         <!-- Streamer Hero qismi -->
         <div class="sp-hero">
           <div class="sp-avatar-wrap">
-            <div class="sp-avatar">
-              <i class="fa-solid fa-tower-broadcast"></i>
+            <div class="sp-avatar" data-test="avatar">
+              <img
+                v-if="profile.avatar_url"
+                :src="profile.avatar_url"
+                alt=""
+                referrerpolicy="no-referrer"
+                class="sp-avatar-img"
+              />
+              <span v-else class="sp-avatar-letter">{{ initial }}</span>
             </div>
-            <span class="sp-live-badge" title="Donat qabul qilinmoqda">
-              <span class="sp-dot"></span> LIVE ALERT
+            <span class="sp-live-badge" title="Donatlar efirda alert bilan chiqadi">
+              <i class="fa-solid fa-bell"></i> Alert yoqilgan
             </span>
           </div>
 
@@ -324,7 +352,7 @@ onMounted(load)
                   type="text"
                   maxlength="64"
                   :disabled="anonymous"
-                  placeholder="Ismingiz yoki nick (bo'sh qolsa — Anonim)"
+                  placeholder="Ism yoki nik (ixtiyoriy)"
                   class="sp-inp with-ic"
                   data-test="sender-name"
                 />
@@ -340,6 +368,7 @@ onMounted(load)
                 <i class="fa-solid fa-user-secret"></i> Anonim
               </button>
             </div>
+            <p class="sp-field-note">Boʻsh qolsa — Anonim</p>
           </div>
 
           <!-- 3. Summa + Tezkor chiplar -->
@@ -351,12 +380,14 @@ onMounted(load)
 
             <div class="sp-amount-box" :class="{ invalid: belowMin }">
               <input
-                v-model="amount"
-                type="number"
+                :value="amountDisplay"
+                type="text"
                 inputmode="numeric"
-                :min="minAmount"
+                autocomplete="off"
                 :placeholder="fmtSom(minAmount)"
                 class="sp-amount-inp"
+                data-test="amount"
+                @input="onAmountInput"
               />
               <span class="sp-ccy-tag">SO'M</span>
             </div>
@@ -372,10 +403,36 @@ onMounted(load)
                 type="button"
                 class="sp-preset"
                 :class="{ active: amountNum === p }"
+                data-test="preset"
                 @click="pickPreset(p)"
               >
                 {{ fmtSom(p) }}
+                <span v-if="tierMins.has(p)" class="sp-preset-star" title="Shu summadan maxsus alert">★</span>
               </button>
+            </div>
+
+            <!-- Summa boʻyicha alertlar (streamer sozlagan darajalar) -->
+            <div v-if="tiers.length" class="sp-tiers" data-test="tiers">
+              <div class="sp-tiers-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Summa boʻyicha alertlar</div>
+              <button
+                v-for="t in tiers"
+                :key="t.min_amount"
+                type="button"
+                class="sp-tier"
+                :class="{ active: amountNum >= t.min_amount }"
+                data-test="tier"
+                @click="pickPreset(t.min_amount)"
+              >
+                <span class="sp-tier-amt">{{ fmtSom(t.min_amount) }} soʻmdan</span>
+                <span class="sp-tier-lbl">— {{ t.label || 'maxsus alert' }}</span>
+                <span class="sp-tier-ic">
+                  <span v-if="t.has_sound" title="Musiqa">🎵</span>
+                  <span v-if="t.has_media" title="Rasm / GIF">🖼</span>
+                </span>
+              </button>
+              <p v-if="profile.tts_enabled" class="sp-field-note">
+                <i class="fa-solid fa-volume-high"></i> Xabaringiz efirda ovoz bilan oʻqiladi
+              </p>
             </div>
           </div>
 
@@ -475,12 +532,18 @@ onMounted(load)
             </template>
           </button>
 
+          <p class="sp-consent" data-test="consent">
+            Yuborish orqali <RouterLink to="/legal/offer">Ommaviy oferta</RouterLink>
+            shartlariga rozilik bildirasiz
+          </p>
+
           <p class="sp-foot-note">
             <i class="fa-solid fa-shield-halved"></i>
             Payme himoyalangan sahifasiga o'tasiz. To'lov tasdiqlanishi bilan efirda jonli alert chiqadi.
           </p>
         </div>
       </div>
+      <SiteFooter class="sp-footer" />
     </main>
   </div>
 </template>
@@ -572,8 +635,8 @@ onMounted(load)
 .sp-main {
   flex: 1;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 10px 16px 48px;
 }
 
@@ -669,12 +732,21 @@ onMounted(load)
   align-items: center;
   gap: 5px;
 }
-.sp-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 8px #22c55e;
+.sp-live-badge i {
+  font-size: 0.6rem;
+}
+.sp-avatar {
+  overflow: hidden;
+}
+.sp-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sp-avatar-letter {
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1;
 }
 .sp-name {
   font-size: 1.55rem;
@@ -1033,15 +1105,16 @@ onMounted(load)
 }
 
 /* Tezkor summa chiplari */
+/* 3 ustun — 6 ta chip telefonda 3×2 */
 .sp-presets {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
   margin-top: 2px;
 }
 .sp-preset {
-  flex: 1;
-  min-width: 72px;
+  position: relative;
+  min-width: 0;
   height: 34px;
   padding: 0 10px;
   border-radius: 10px;
@@ -1061,6 +1134,82 @@ onMounted(load)
   background: rgba(0, 212, 255, 0.16);
   border-color: var(--c-accent, #00d4ff);
   color: var(--c-accent, #00d4ff);
+}
+.sp-preset-star {
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  font-size: 0.7rem;
+  color: #facc15;
+  text-shadow: 0 0 6px rgba(250, 204, 21, 0.6);
+}
+
+/* Summa darajalari */
+.sp-tiers {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sp-tiers-title {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--c-text-dim, #8fa8c8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sp-tiers-title i {
+  color: #facc15;
+}
+.sp-tier {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(89, 133, 189, 0.22);
+  color: var(--c-text, #f0f8ff);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+.sp-tier.active {
+  border-color: rgba(250, 204, 21, 0.55);
+  background: rgba(250, 204, 21, 0.07);
+}
+.sp-tier-amt {
+  font-weight: 800;
+  white-space: nowrap;
+}
+.sp-tier-lbl {
+  flex: 1;
+  min-width: 0;
+  color: var(--c-text-dim, #8fa8c8);
+  overflow-wrap: anywhere;
+}
+.sp-tier-ic {
+  display: inline-flex;
+  gap: 2px;
+}
+.sp-field-note {
+  font-size: 0.74rem;
+  color: var(--c-text-dim, #8fa8c8);
+  margin: 0;
+}
+.sp-consent {
+  font-size: 0.76rem;
+  color: var(--c-text-dim, #8fa8c8);
+  text-align: center;
+  margin: -2px 0 0;
+}
+.sp-consent a {
+  color: var(--c-accent, #00d4ff);
+}
+.sp-footer {
+  width: 100%;
+  max-width: 560px;
 }
 
 .sp-textarea {
