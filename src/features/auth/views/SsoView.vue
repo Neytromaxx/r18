@@ -1,10 +1,13 @@
 <script setup>
 // SSO qabul sahifasi — n20'dan ?code= bilan ochiladi. Kodni token juftligiga
-// almashtirib, hub'ga o'tadi (router.replace — kod tarixdan o'chadi).
+// almashtirib, `?redirect=` ga (boʻlmasa hubʼga) oʻtadi — router.replace,
+// kod tarixdan oʻchadi. Masalan toʻlov sahifasidagi "Olish" shu yoʻl bilan
+// qaytib keladi.
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '../store/auth.store'
+import { safeRedirect } from '@/shared/utils/redirect'
 
 const route = useRoute()
 const router = useRouter()
@@ -19,11 +22,11 @@ onMounted(async () => {
   }
   try {
     await auth.loginWithSsoCode(String(code))
-    router.replace({ name: 'hub' })
+    router.replace(safeRedirect(route.query.redirect))
   } catch (e) {
     failed.value = true
     toast.error('Kirish havolasi eskirgan — qaytadan kiring')
-    router.replace({ name: 'login' })
+    router.replace({ name: 'login', query: { redirect: route.query.redirect || undefined } })
   }
 })
 </script>

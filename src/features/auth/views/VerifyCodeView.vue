@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useAuthStore } from '../store/auth.store'
+import { safeRedirect } from '@/shared/utils/redirect'
 import { useResendTimer } from '../composables/useResendTimer'
 import CodeInput from '../components/CodeInput.vue'
 
@@ -41,7 +42,7 @@ async function handleVerify(submittedCode) {
   try {
     await auth.loginWithCode(email.value, c)
     toast.success('Xush kelibsiz!')
-    router.push(route.query.redirect || '/hub')
+    router.push(safeRedirect(route.query.redirect))
   } catch (e) {
     const status = e.response?.status
     if (status === 400) {

@@ -3,6 +3,7 @@ import { onMounted, ref, onUnmounted } from 'vue'
 import { toast } from 'vue-sonner'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../store/auth.store'
+import { safeRedirect } from '@/shared/utils/redirect'
 
 const router = useRouter()
 const route = useRoute()
@@ -24,8 +25,7 @@ async function handleCredentialResponse(response) {
   try {
     await auth.loginWithGoogle(response.credential)
     toast.success(`Xush kelibsiz, ${auth.user?.username || ''}!`)
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
+    router.push(safeRedirect(route.query.redirect, '/'))
   } catch (e) {
     const status = e.response?.status
     const errorCode = e.response?.data?.error?.code

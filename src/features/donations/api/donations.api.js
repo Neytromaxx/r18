@@ -1,32 +1,15 @@
 import { api } from '@/app/api/client'
 
 export const donationsApi = {
-  // POST /donations — donat yuborish. player uchun recipient_public_id (qidiruvdan)
-  // yoki recipient_id (UUID). team/tournament uchun recipient_id.
-  // cover_fee: true bo'lsa komissiya (0.7%) donator balansidan ustiga yechiladi
-  // va streamerga to'liq kiritilgan summa boradi.
-  donate({
-    recipient_type,
-    recipient_id = null,
-    recipient_public_id = null,
-    amount,
-    message = null,
-    cover_fee = false,
-  }) {
-    return api.post(
-      '/donations',
-      {
-        recipient_type,
-        ...(recipient_id ? { recipient_id } : {}),
-        ...(recipient_public_id ? { recipient_public_id } : {}),
-        amount,
-        ...(message ? { message } : {}),
-        cover_fee: Boolean(cover_fee),
-      },
-      { headers: { 'Idempotency-Key': crypto.randomUUID() } },
-    )
+  // POST /donations/rewards/claim — mehmon donati uchun ajratilgan W ni olish.
+  // claim_token — intent yaratilganda localStorage ga yozilgan (epd_claim:{id}).
+  claimReward(intentId, claimToken) {
+    return api.post('/donations/rewards/claim', {
+      intent_id: intentId,
+      claim_token: claimToken,
+    })
   },
-  // GET /donations/sent — men yuborgan donatlar
+  // GET /donations/sent — men yuborgan donatlar (+ "Olish" orqali bogʻlanganlar)
   sent() {
     return api.get('/donations/sent')
   },

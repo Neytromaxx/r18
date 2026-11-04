@@ -1,14 +1,24 @@
 <script setup>
 // To'lov holati sahifasi — Payme'dan qaytgach ochiladi (/pay/:intentId).
 // Har 2s da poll (maks 2 daqiqa): paid | cancelled/failed | timeout.
-import { ref, onMounted, onUnmounted } from 'vue'
+//
+// Donat W (backend `reward`):
+//   aʼzo donatori — "+50 W keshbek (+100 W birinchi donat bonusi)";
+//   mehmon — W "ajratiladi": "Olish" faqat toʻlovni boshlagan brauzerda
+//   (token localStorage da, `epd_claim:{intentId}`). Kirmagan boʻlsa —
+//   login → shu sahifaga `?claim=1` bilan qaytadi va W avtomatik olinadi.
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { billingApi } from '../api/billing.api'
+import { donationsApi } from '@/features/donations/api/donations.api'
+import { useAuthStore } from '@/features/auth/store/auth.store'
 import { fmtSom } from '@/shared/utils/money'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const intentId = route.params.intentId
+const CLAIM_KEY = `epd_claim:${intentId}`
 
 const state = ref('loading')   // loading | paid | cancelled | timeout | notfound
 const intent = ref(null)
@@ -17,11 +27,58 @@ let elapsed = 0
 const MAX_MS = 120000
 const STEP_MS = 2000
 
+// ── W olish ─────────────────────────────────────────────────
+const claimToken = ref(readToken())
+const claiming = ref(false)
+const claimResult = ref(null)   // { message, ok }
+
+function readToken() {
+  try { return localStorage.getItem(CLAIM_KEY) } catch { return null }
+}
+function dropToken() {
+  try { localStorage.removeItem(CLAIM_KEY) } catch { /* yoʻq */ }
+  claimToken.value = null
+}
+
+const reward = computed(() => intent.value?.reward || null)
+// "Olish" taklifi — faqat tokeni bor (toʻlovni boshlagan) brauzerda
+// Aʼzo donatori oʻz W xabarini koʻradi (mehmon sahifani ochganda emas)
+const intentIsMine = computed(() => auth.isAuthenticated && !claimToken.value)
+const canClaim = computed(() => (
+  reward.value?.status === 'pending' && !!claimToken.value && !claimResult.value
+))
+
+async function claim() {
+  if (!auth.isAuthenticated) {
+    router.push({ name: 'login', query: { redirect: `/pay/${intentId}?claim=1` } })
+    return
+  }
+  claiming.value = true
+  try {
+    const { data } = await donationsApi.claimReward(intentId, claimToken.value)
+    claimResult.value = { ok: true, message: data.message }
+    dropToken()
+  } catch (e) {
+    const err = e.response?.data?.error
+    claimResult.value = { ok: false, message: err?.message || 'W ni olib boʻlmadi.' }
+    // Muddati oʻtgan yoki boshqa hisob olgan — token endi kerak emas
+    if (['claim_expired', 'already_claimed', 'reward_not_found'].includes(err?.code)) dropToken()
+  } finally {
+    claiming.value = false
+  }
+}
+
 async function poll() {
   try {
     const { data } = await billingApi.getIntent(intentId)
     intent.value = data
-    if (data.status === 'paid') { state.value = 'paid'; stop(); return }
+    if (data.status === 'paid') {
+      state.value = 'paid'
+      stop()
+      // Login → qaytish: W avtomatik olinadi
+      if (route.query.claim === '1' && auth.isAuthenticated && canClaim.value) claim()
+      return
+    }
     if (data.status === 'cancelled' || data.status === 'failed') {
       state.value = 'cancelled'; stop(); return
     }
@@ -56,7 +113,37 @@ onUnmounted(stop)
         <h2 v-else>Donat yetkazildi! 🎉</h2>
         <p class="amount">{{ fmtSom(intent?.amount) }} so'm</p>
         <p v-if="intent?.kind === 'topup'" class="dim">+1% W coin bonus hisobingizda.</p>
-        <button class="btn" @click="router.push(intent?.kind === 'topup' ? '/hub' : '/')">Davom etish</button>
+
+        <!-- Donat W -->
+        <template v-if="intent?.kind === 'donation' && reward">
+          <div v-if="claimResult" class="w-box" :class="{ bad: !claimResult.ok }" data-test="claim-result">
+            <i :class="claimResult.ok ? 'fa-solid fa-coins' : 'fa-solid fa-circle-info'"></i>
+            <span>{{ claimResult.message }}</span>
+          </div>
+          <div v-else-if="canClaim" class="w-box offer" data-test="claim-offer">
+            <i class="fa-solid fa-gift"></i>
+            <span>{{ reward.message }}</span>
+            <button class="btn w-btn" :disabled="claiming" data-test="claim" @click="claim">
+              <i class="fa-solid fa-hand-holding-dollar"></i>
+              {{ claiming ? 'Olinmoqda…' : 'Olish' }}
+            </button>
+          </div>
+          <div
+            v-else-if="reward.status === 'expired' && claimToken"
+            class="w-box bad"
+          >
+            <i class="fa-solid fa-clock"></i><span>{{ reward.message }}</span>
+          </div>
+          <div
+            v-else-if="reward.status === 'claimed' && reward.message && intentIsMine"
+            class="w-box"
+            data-test="member-w"
+          >
+            <i class="fa-solid fa-coins"></i><span>{{ reward.message }}</span>
+          </div>
+        </template>
+
+        <button class="btn" @click="router.push('/')">Davom etish</button>
       </template>
 
       <!-- Bekor/xato -->
@@ -100,5 +187,16 @@ onUnmounted(stop)
 h2 { font-size: 1.25rem; font-weight: 900; }
 .amount { font-size: 1.6rem; font-weight: 900; color: var(--c-text, #eaf2ff); margin-top: 6px; }
 .dim { color: var(--c-text-dim, #9fb2c8); font-size: 0.9rem; margin-top: 6px; }
+.w-box {
+  margin-top: 16px; padding: 12px 14px; border-radius: 14px; text-align: left;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+  background: rgba(250, 204, 21, 0.08); border: 1px solid rgba(250, 204, 21, 0.4);
+  color: #fde68a; font-size: 0.9rem; font-weight: 700; line-height: 1.4;
+}
+.w-box > i { color: #facc15; font-size: 1.1rem; }
+.w-box > span { flex: 1; min-width: 200px; }
+.w-box.bad { background: rgba(255, 255, 255, 0.04); border-color: var(--glass-border, rgba(89, 133, 189, 0.25)); color: var(--c-text-dim, #9fb2c8); }
+.w-box.bad > i { color: var(--c-text-dim, #9fb2c8); }
+.w-btn { margin-top: 0; width: 100%; background: #facc15; color: #1f1600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn { margin-top: 18px; height: 46px; padding: 0 26px; border-radius: 12px; border: none; background: var(--c-accent, #00d4ff); color: var(--c-bg-base, #04101f); font-weight: 800; }
 </style>
