@@ -21,7 +21,7 @@ function startEdit() {
 async function saveUsername() {
   const name = usernameInput.value.trim()
   if (!USERNAME_RE.test(name)) {
-    toast.error("Username 3-30 belgi, faqat harf, raqam va _ bo'lishi kerak")
+    toast.error("Username 3-30 belgi, faqat harf, raqam va _ boʻlishi kerak")
     return
   }
   saving.value = true
@@ -84,7 +84,7 @@ async function saveTimezone(e) {
           <button class="btn-mini ghost" @click="editing = false">Bekor</button>
         </div>
       </div>
-      <p class="hint">Username donat alertlari va leaderboard'da ko'rinadi.</p>
+      <p class="hint">Username donat alertlari va leaderboardʼda koʻrinadi.</p>
 
       <div class="row">
         <span class="label">Vaqt mintaqasi</span>
@@ -97,7 +97,7 @@ async function saveTimezone(e) {
           <option v-for="o in TZ_OPTIONS" :key="o.value" :value="o.value">{{ o.label }}</option>
         </select>
       </div>
-      <p class="hint">Barcha vaqtlar shu mintaqa bo'yicha ko'rsatiladi. Standart: UTC+5 (Toshkent).</p>
+      <p class="hint">Barcha vaqtlar shu mintaqa boʻyicha koʻrsatiladi. Standart: UTC+5 (Toshkent).</p>
 
       <div class="row">
         <span class="label">ID</span>

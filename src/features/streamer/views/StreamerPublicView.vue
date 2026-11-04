@@ -248,7 +248,7 @@ onMounted(load)
       <div v-else-if="notFound" class="sp-state glass">
         <div class="sp-nf-ic"><i class="fa-solid fa-user-slash"></i></div>
         <h2>Streamer topilmadi</h2>
-        <p>Havola noto'g'ri yoki streamer profili hali faollashtirilmagan.</p>
+        <p>Havola notoʻgʻri yoki streamer profili hali faollashtirilmagan.</p>
         <RouterLink to="/" class="sp-back-home">Bosh sahifaga qaytish</RouterLink>
       </div>
 
@@ -303,9 +303,9 @@ onMounted(load)
         <div class="sp-form">
           <!-- 1. To'lov usuli -->
           <div class="sp-sec-head">
-            <span class="sp-sec-title">To'lov usuli</span>
+            <span class="sp-sec-title">Toʻlov usuli</span>
             <span v-if="!auth.isAuthenticated" class="sp-guest-tag">
-              <i class="fa-solid fa-bolt"></i> Ro'yxatdan o'tmasdan to'lash mumkin
+              <i class="fa-solid fa-bolt"></i> Roʻyxatdan oʻtmasdan toʻlash mumkin
             </span>
           </div>
 
@@ -341,7 +341,7 @@ onMounted(load)
           <!-- 2. Kimdan (Guest uchun ism, Login user uchun nick ko'rsatkichi) -->
           <div class="sp-field">
             <div class="sp-field-head">
-              <label>Efirda ko'rinadigan ism</label>
+              <label>Efirda koʻrinadigan ism</label>
               <span class="sp-field-hint">OBS alertda chiqadi</span>
             </div>
             <div class="sp-name-row">
@@ -375,7 +375,7 @@ onMounted(load)
           <div class="sp-field">
             <div class="sp-field-head">
               <label>Donat summasi</label>
-              <span class="sp-field-hint">Minimal: <b>{{ fmtSom(minAmount) }} so'm</b></span>
+              <span class="sp-field-hint">Minimal: <b>{{ fmtSom(minAmount) }} soʻm</b></span>
             </div>
 
             <div class="sp-amount-box" :class="{ invalid: belowMin }">
@@ -389,10 +389,10 @@ onMounted(load)
                 data-test="amount"
                 @input="onAmountInput"
               />
-              <span class="sp-ccy-tag">SO'M</span>
+              <span class="sp-ccy-tag">SOʻM</span>
             </div>
             <p v-if="belowMin" class="sp-warn-text">
-              Minimal donat summasi {{ fmtSom(minAmount) }} so'm bo'lishi kerak.
+              Minimal donat summasi {{ fmtSom(minAmount) }} soʻm boʻlishi kerak.
             </p>
 
             <!-- Tezkor summa chiplari -->
@@ -459,15 +459,15 @@ onMounted(load)
               </div>
               <div class="sp-cover-text">
                 <div class="sp-cover-title">
-                  To'liq summa yetkazish
+                  Toʻliq summa yetkazish
                   <span v-if="ratePct" class="sp-cover-badge">+{{ ratePct }}%</span>
                 </div>
                 <div class="sp-cover-sub">
                   <template v-if="amountNum > 0">
-                    Streamer aynan <b>{{ fmtSom(amountNum) }} so'm</b>ni to'liq qabul qiladi
+                    Streamer aynan <b>{{ fmtSom(amountNum) }} soʻm</b>ni toʻliq qabul qiladi
                   </template>
                   <template v-else>
-                    Komissiyani o'z ustingizga olasiz — streamer kiritilgan summani to'liq oladi
+                    Komissiyani oʻz ustingizga olasiz — streamer kiritilgan summani toʻliq oladi
                   </template>
                 </div>
               </div>
@@ -479,18 +479,18 @@ onMounted(load)
             <template v-if="quote">
               <div class="sp-rc-row">
                 <span><i class="fa-solid fa-hand-holding-heart"></i> Streamerga tushadi</span>
-                <b class="sp-rc-net" data-test="rc-net">{{ fmtSom(quote.net) }} so'm</b>
+                <b class="sp-rc-net" data-test="rc-net">{{ fmtSom(quote.net) }} soʻm</b>
               </div>
               <div class="sp-rc-row">
                 <span>
                   Komissiya ({{ quote.fee_pct }}% —
                   {{ coverFee ? 'sizdan' : 'donat ichidan' }})
                 </span>
-                <span data-test="rc-fee">{{ fmtSom(quote.fee) }} so'm</span>
+                <span data-test="rc-fee">{{ fmtSom(quote.fee) }} soʻm</span>
               </div>
               <div class="sp-rc-row total">
-                <span>Jami to'laysiz</span>
-                <b data-test="rc-total">{{ fmtSom(quote.total_charge) }} so'm</b>
+                <span>Jami toʻlaysiz</span>
+                <b data-test="rc-total">{{ fmtSom(quote.total_charge) }} soʻm</b>
               </div>
               <template v-if="auth.isAuthenticated">
                 <div v-if="quote.cashback_w > 0" class="sp-rc-row w" data-test="rc-cashback">
@@ -528,7 +528,7 @@ onMounted(load)
             <i class="fa-solid fa-paper-plane"></i>
             <template v-if="sending">Yuborilmoqda…</template>
             <template v-else>
-              Payme orqali {{ quote ? fmtSom(quote.total_charge) + " so'm " : '' }}yuborish
+              Payme orqali {{ quote ? fmtSom(quote.total_charge) + " soʻm " : '' }}yuborish
             </template>
           </button>
 
@@ -539,7 +539,7 @@ onMounted(load)
 
           <p class="sp-foot-note">
             <i class="fa-solid fa-shield-halved"></i>
-            Payme himoyalangan sahifasiga o'tasiz. To'lov tasdiqlanishi bilan efirda jonli alert chiqadi.
+            Payme himoyalangan sahifasiga oʻtasiz. Toʻlov tasdiqlanishi bilan efirda jonli alert chiqadi.
           </p>
         </div>
       </div>

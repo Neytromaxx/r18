@@ -116,7 +116,7 @@ function changeEmail() {
 
       <!-- Wrong email -->
       <button class="back" @click="changeEmail">
-        <i class="fa-solid fa-arrow-left"></i> Email noto'g'rimi?
+        <i class="fa-solid fa-arrow-left"></i> Email notoʻgʻrimi?
       </button>
     </div>
   </div>

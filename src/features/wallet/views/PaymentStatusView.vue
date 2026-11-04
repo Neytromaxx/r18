@@ -102,16 +102,16 @@ onUnmounted(stop)
       <!-- Kutish -->
       <template v-if="state === 'loading'">
         <i class="fa-solid fa-spinner fa-spin big accent"></i>
-        <h2>To'lov tekshirilmoqda…</h2>
-        <p class="dim">Payme tasdig'ini kutyapmiz. Bu sahifani yopmang.</p>
+        <h2>Toʻlov tekshirilmoqda…</h2>
+        <p class="dim">Payme tasdigʻini kutyapmiz. Bu sahifani yopmang.</p>
       </template>
 
       <!-- Muvaffaqiyat -->
       <template v-else-if="state === 'paid'">
         <i class="fa-solid fa-circle-check big ok"></i>
-        <h2 v-if="intent?.kind === 'topup'">Balans to'ldirildi!</h2>
+        <h2 v-if="intent?.kind === 'topup'">Balans toʻldirildi!</h2>
         <h2 v-else>Donat yetkazildi! 🎉</h2>
-        <p class="amount">{{ fmtSom(intent?.amount) }} so'm</p>
+        <p class="amount">{{ fmtSom(intent?.amount) }} soʻm</p>
         <p v-if="intent?.kind === 'topup'" class="dim">+1% W coin bonus hisobingizda.</p>
 
         <!-- Donat W -->
@@ -149,8 +149,8 @@ onUnmounted(stop)
       <!-- Bekor/xato -->
       <template v-else-if="state === 'cancelled'">
         <i class="fa-solid fa-circle-xmark big err"></i>
-        <h2>To'lov amalga oshmadi</h2>
-        <p class="dim">To'lov bekor qilindi yoki xato yuz berdi.</p>
+        <h2>Toʻlov amalga oshmadi</h2>
+        <p class="dim">Toʻlov bekor qilindi yoki xato yuz berdi.</p>
         <button class="btn" @click="router.back()">Qaytadan urinish</button>
       </template>
 
@@ -158,13 +158,13 @@ onUnmounted(stop)
       <template v-else-if="state === 'timeout'">
         <i class="fa-solid fa-clock big warn"></i>
         <h2>Hali tasdiqlanmadi</h2>
-        <p class="dim">To'lov hali Payme tomonidan tasdiqlanmadi. Birozdan so'ng tekshiring.</p>
+        <p class="dim">Toʻlov hali Payme tomonidan tasdiqlanmadi. Birozdan soʻng tekshiring.</p>
         <button class="btn" @click="retryPoll">Qayta tekshirish</button>
       </template>
 
       <template v-else>
         <i class="fa-solid fa-circle-question big dim"></i>
-        <h2>To'lov topilmadi</h2>
+        <h2>Toʻlov topilmadi</h2>
         <button class="btn" @click="router.push('/')">Bosh sahifa</button>
       </template>
     </div>

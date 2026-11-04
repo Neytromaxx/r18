@@ -38,19 +38,19 @@ onMounted(load)
     <div v-if="loading" class="muted">Yuklanmoqda…</div>
     <template v-else>
       <div v-if="tab === 'donors'" class="list">
-        <div v-if="!donors.length" class="muted">Hali donat yo'q.</div>
+        <div v-if="!donors.length" class="muted">Hali donat yoʻq.</div>
         <div v-for="(d, i) in donors" :key="d.account_id" class="row">
           <span class="rank">{{ medal(i) }}</span>
           <span class="nick">{{ d.nickname }}</span>
-          <span class="total">{{ fmtSom(d.total) }} so'm</span>
+          <span class="total">{{ fmtSom(d.total) }} soʻm</span>
         </div>
       </div>
       <div v-else class="list">
-        <div v-if="!recipients.length" class="muted">Hali qabul qiluvchi yo'q.</div>
+        <div v-if="!recipients.length" class="muted">Hali qabul qiluvchi yoʻq.</div>
         <div v-for="(d, i) in recipients" :key="d.account_id" class="row">
           <span class="rank">{{ medal(i) }}</span>
           <span class="nick">{{ d.nickname }}<span v-if="d.public_id" class="pid"> #{{ d.public_id }}</span></span>
-          <span class="total">{{ fmtSom(d.total) }} so'm</span>
+          <span class="total">{{ fmtSom(d.total) }} soʻm</span>
         </div>
       </div>
     </template>
