@@ -138,5 +138,13 @@ async function logout() {
 @media (max-width: 560px) {
   .nav-label { display: none; }
   .main { padding: 14px 14px 32px; }
+  .topbar { padding: 10px 12px; gap: 8px; }
+  .topnav { gap: 2px; }
+  .nav-link { padding: 8px 10px; }
+  .brand { font-size: 0.95rem; }
+}
+/* Juda tor ekran: brend faqat belgi bilan — menyu sigʻsin */
+@media (max-width: 360px) {
+  .brand span { display: none; }
 }
 </style>

@@ -174,7 +174,7 @@ onUnmounted(stop)
 <style scoped>
 .pay-root { min-height: 100dvh; display: grid; place-items: center; padding: 20px; }
 .card {
-  width: min(94vw, 420px); padding: 32px 24px; text-align: center;
+  width: min(100%, 420px); padding: 32px 24px; text-align: center;
   border-radius: 20px; background: rgba(6, 13, 26, 0.6);
   border: 1px solid var(--glass-border, rgba(89, 133, 189, 0.25));
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -197,6 +197,6 @@ h2 { font-size: 1.25rem; font-weight: 900; }
 .w-box > span { flex: 1; min-width: 200px; }
 .w-box.bad { background: rgba(255, 255, 255, 0.04); border-color: var(--glass-border, rgba(89, 133, 189, 0.25)); color: var(--c-text-dim, #9fb2c8); }
 .w-box.bad > i { color: var(--c-text-dim, #9fb2c8); }
-.w-btn { margin-top: 0; width: 100%; background: #facc15; color: #1f1600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn.w-btn { margin-top: 0; width: 100%; background: #facc15; color: #1f1600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 .btn { margin-top: 18px; height: 46px; padding: 0 26px; border-radius: 12px; border: none; background: var(--c-accent, #00d4ff); color: var(--c-bg-base, #04101f); font-weight: 800; }
 </style>

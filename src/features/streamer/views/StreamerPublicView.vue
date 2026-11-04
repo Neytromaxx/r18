@@ -224,7 +224,7 @@ onMounted(load)
     <header class="sp-topbar">
       <RouterLink to="/" class="sp-brand">
         <span class="sp-brand-ic"><i class="fa-solid fa-bolt"></i></span>
-        <span>Epsilon <b>Donation</b></span>
+        <span class="sp-brand-txt">Epsilon <b>Donation</b></span>
       </RouterLink>
 
       <div class="sp-topbar-right">
@@ -352,7 +352,7 @@ onMounted(load)
                   type="text"
                   maxlength="64"
                   :disabled="anonymous"
-                  placeholder="Ism yoki nik (ixtiyoriy)"
+                  placeholder="Ism yoki nik"
                   class="sp-inp with-ic"
                   data-test="sender-name"
                 />
@@ -618,6 +618,7 @@ onMounted(load)
   color: var(--c-text-dim, #8fa8c8);
 }
 .sp-login-btn {
+  white-space: nowrap;
   background: rgba(0, 212, 255, 0.12);
   border: 1px solid rgba(0, 212, 255, 0.45);
   color: var(--c-text, #f0f8ff);
@@ -1419,9 +1420,23 @@ onMounted(load)
   .sp-user-pill {
     display: none;
   }
+  .sp-brand {
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+  .sp-login-btn {
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
   .sp-card {
     padding: 20px 16px;
     border-radius: 20px;
+  }
+}
+/* Juda tor ekran: brend faqat belgi bilan, "Kirish" tugmasi sigʻsin */
+@media (max-width: 360px) {
+  .sp-brand-txt {
+    display: none;
   }
 }
 </style>
