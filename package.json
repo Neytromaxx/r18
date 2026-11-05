@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/og": "^0.6.8",
     "axios": "^1.18.1",
     "dayjs": "^1.11.21",
     "pinia": "^3.0.4",

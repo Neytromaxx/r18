@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/store/auth.store'
+import SiteFooter from '@/shared/components/SiteFooter.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -9,9 +10,9 @@ function startStreamer() {
   if (auth.isAuthenticated) router.push('/cabinet')
   else router.push({ name: 'login', query: { redirect: '/cabinet' } })
 }
-function goHub() {
-  if (auth.isAuthenticated) router.push('/hub')
-  else router.push({ name: 'login', query: { redirect: '/hub' } })
+// Tomoshabin roʻyxatdan oʻtmasdan streamerni topib toʻlaydi
+function goFind() {
+  router.push('/find')
 }
 </script>
 
@@ -22,17 +23,17 @@ function goHub() {
       <h1>Epsilon <b>Donation</b></h1>
       <p class="tagline">
         Streamerlar uchun donat platformasi — tomoshabinlaringizdan donat qabul
-        qiling, OBS overlay'da jonli alert, ovoz va TTS bilan ko'rsating.
+        qiling, OBS overlayʼda jonli alert, ovoz va TTS bilan koʻrsating.
       </p>
       <div class="cta-row">
         <button class="btn-primary press" @click="startStreamer">
-          <i class="fa-solid fa-tower-broadcast"></i> Streamer bo'lish
+          <i class="fa-solid fa-tower-broadcast"></i> Streamer boʻlish
         </button>
-        <button class="btn-ghost press" @click="goHub">
+        <button class="btn-ghost press" data-test="home-donate" @click="goFind">
           <i class="fa-solid fa-hand-holding-heart"></i> Donat yuborish
         </button>
       </div>
-      <p class="note">Ro'yxatdan o'tish — faqat email va tasdiqlash kodi. Parol kerak emas.</p>
+      <p class="note">Roʻyxatdan oʻtish — faqat email va tasdiqlash kodi. Parol kerak emas.</p>
     </section>
 
     <section class="steps">
@@ -44,7 +45,7 @@ function goHub() {
       <div class="step glass anim-rise">
         <span class="num">2</span>
         <h3>Sozlang</h3>
-        <p>Kabinetda nom, platforma linklari va overlay'ni sozlaysiz, OBS havolasini olasiz.</p>
+        <p>Kabinetda nom, platforma linklari va overlayʼni sozlaysiz, OBS havolasini olasiz.</p>
       </div>
       <div class="step glass anim-rise">
         <span class="num">3</span>
@@ -52,6 +53,8 @@ function goHub() {
         <p>Tomoshabinlar sahifangizdan donat yuboradi — alert jonli efirda chiqadi.</p>
       </div>
     </section>
+
+    <SiteFooter />
   </div>
 </template>
 

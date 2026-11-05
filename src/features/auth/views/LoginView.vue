@@ -17,7 +17,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 async function handleSubmit() {
   const value = email.value.trim().toLowerCase()
   if (!EMAIL_RE.test(value)) {
-    toast.error("Email manzilini to'g'ri kiriting")
+    toast.error("Email manzilini toʻgʻri kiriting")
     return
   }
   loading.value = true
@@ -30,7 +30,7 @@ async function handleSubmit() {
       query: { email: value, redirect: route.query.redirect || undefined },
     })
   } catch (e) {
-    toast.error(e.response?.data?.detail || "Kod yuborib bo'lmadi")
+    toast.error(e.response?.data?.detail || "Kod yuborib boʻlmadi")
   } finally {
     loading.value = false
   }
@@ -51,7 +51,7 @@ async function handleSubmit() {
     <div class="card glass anim-rise">
       <p class="desc">
         Email manzilingizni kiriting — 6 xonali kod yuboramiz.
-        Yangi bo'lsangiz akkaunt avtomatik ochiladi, parol kerak emas.
+        Yangi boʻlsangiz akkaunt avtomatik ochiladi, parol kerak emas.
       </p>
 
       <form @submit.prevent="handleSubmit">

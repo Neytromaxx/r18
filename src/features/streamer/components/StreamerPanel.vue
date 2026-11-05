@@ -208,13 +208,13 @@ onMounted(load)
     <template v-else-if="!profile">
       <div class="intro">
         <div class="ic"><i class="fa-solid fa-video"></i></div>
-        <h3>Streamer bo'ling</h3>
-        <p>Donatlaringiz jonli efirda OBS overlay orqali ko'rsatiladi.</p>
+        <h3>Streamer boʻling</h3>
+        <p>Donatlaringiz jonli efirda OBS overlay orqali koʻrsatiladi.</p>
       </div>
-      <label class="lbl">Ko'rsatiladigan nom</label>
+      <label class="lbl">Koʻrsatiladigan nom</label>
       <input v-model="name" type="text" maxlength="80" placeholder="Masalan: EpsilonKing" class="inp" />
       <button class="btn-primary" :disabled="busy" @click="become">
-        {{ busy ? '…' : "Streamer bo'lish" }}
+        {{ busy ? '…' : "Streamer boʻlish" }}
       </button>
     </template>
 
@@ -222,11 +222,11 @@ onMounted(load)
     <template v-else>
       <div class="badge-streamer"><i class="fa-solid fa-circle-check"></i> Siz streamersiz</div>
 
-      <label class="lbl">Ko'rsatiladigan nom</label>
+      <label class="lbl">Koʻrsatiladigan nom</label>
       <input v-model="name" type="text" maxlength="80" class="inp" />
 
       <label class="lbl">Streaming / ijtimoiy havolalar</label>
-      <p class="hint">Public donat sahifangizda ko'rinadi.</p>
+      <p class="hint">Public donat sahifangizda koʻrinadi.</p>
       <div class="links">
         <div v-for="pf in PLATFORMS" :key="pf.key" class="link-row">
           <span class="link-ic" :style="{ color: pf.color }"><i :class="pf.icon"></i></span>
@@ -242,7 +242,7 @@ onMounted(load)
       <label class="lbl">Donat sozlamalari</label>
       <div class="settings">
         <div class="set-row">
-          <span class="set-lbl">Minimal summa (so'm)</span>
+          <span class="set-lbl">Minimal summa (soʻm)</span>
           <input v-model.number="settings.min_amount" type="number" min="1000" step="1000" class="inp num" />
         </div>
         <div class="set-row">
@@ -251,11 +251,11 @@ onMounted(load)
         </div>
         <label class="toggle">
           <input v-model="settings.show_amount" type="checkbox" />
-          <span>Summani ko'rsatish</span>
+          <span>Summani koʻrsatish</span>
         </label>
         <label class="toggle">
           <input v-model="settings.show_message" type="checkbox" />
-          <span>Xabarni ko'rsatish</span>
+          <span>Xabarni koʻrsatish</span>
         </label>
         <label class="toggle">
           <input v-model="settings.sound_enabled" type="checkbox" />
@@ -269,7 +269,7 @@ onMounted(load)
         Masalan 10 000 → Akon - Ghetto. Eng mos (yuqori) daraja ijro etiladi.
         Uchinchi maydon — musiqa qaysi <b>sekunddan</b> boshlanishi (0 = boshidan).
         <i class="fa-regular fa-image"></i> tugmasi orqali shu darajaga <b>rasm/GIF</b>
-        qo'ysangiz, alertda sikkacha o'rniga o'sha ko'rinadi (ism, summa va xabar joyida qoladi).
+        qoʻysangiz, alertda sikkacha oʻrniga oʻsha koʻrinadi (ism, summa va xabar joyida qoladi).
       </p>
       <div class="set-row">
         <span class="set-lbl">Musiqa davomiyligi (sek)</span>
@@ -284,7 +284,7 @@ onMounted(load)
       </div>
       <p class="hint">
         <b>0</b> — alert davomiyligi bilan teng ({{ settings.alert_duration || 8 }} sek).
-        Boshqa qiymat kiritilsa, musiqa o'sha sekunddan keyin ohista pasayib to'xtaydi.
+        Boshqa qiymat kiritilsa, musiqa oʻsha sekunddan keyin ohista pasayib toʻxtaydi.
       </p>
       <div class="tiers">
         <div v-for="(t, i) in tiers" :key="i" class="tier">
@@ -312,13 +312,13 @@ onMounted(load)
             <input type="file" accept="image/*" class="hidden" @change="(e) => uploadTierMedia(i, e)" />
           </label>
           <button v-if="t.media_url" class="btn-mini danger" @click="clearTierMedia(i)" title="Rasmni olib tashlash"><i class="fa-solid fa-xmark"></i></button>
-          <button class="btn-mini danger" @click="removeTier(i)" title="O'chirish"><i class="fa-solid fa-trash"></i></button>
+          <button class="btn-mini danger" @click="removeTier(i)" title="Oʻchirish"><i class="fa-solid fa-trash"></i></button>
         </div>
-        <button class="btn-add" @click="addTier"><i class="fa-solid fa-plus"></i> Daraja qo'shish</button>
+        <button class="btn-add" @click="addTier"><i class="fa-solid fa-plus"></i> Daraja qoʻshish</button>
       </div>
 
       <!-- TTS: xabarni ovoz bilan o'qish -->
-      <label class="lbl">Xabarni ovoz bilan o'qish (TTS)</label>
+      <label class="lbl">Xabarni ovoz bilan oʻqish (TTS)</label>
       <div class="settings">
         <label class="toggle">
           <input v-model="settings.tts_enabled" type="checkbox" />
@@ -341,7 +341,7 @@ onMounted(load)
             <option value="en">Inglizcha</option>
           </select>
         </div>
-        <p class="hint">Server ovozi (Google TTS). Limitdan ortiq takror harflar (ъъъъъъ) o'qishда qisqartiriladi. Linklar o'qilmaydi — overlayда platforma logosi ko'rinadi.</p>
+        <p class="hint">Server ovozi (Google TTS). Limitdan ortiq takror harflar (ъъъъъъ) oʻqishda qisqartiriladi. Linklar oʻqilmaydi — overlayda platforma logosi koʻrinadi.</p>
       </div>
 
       <button class="btn-primary" :disabled="busy" @click="saveProfile">
@@ -356,7 +356,7 @@ onMounted(load)
       </div>
 
       <label class="lbl">OBS overlay havolasi</label>
-      <p class="hint">Bu havolani OBS'da "Browser Source" sifatida qo'shing. Donat kelganda ekranда alert chiqadi.</p>
+      <p class="hint">Bu havolani OBSʼda "Browser Source" sifatida qoʻshing. Donat kelganda ekranda alert chiqadi.</p>
       <div class="overlay-box">
         <code>{{ overlayUrl }}</code>
         <button class="btn-mini" @click="copyOverlay"><i class="fa-solid fa-copy"></i></button>

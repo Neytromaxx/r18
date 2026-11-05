@@ -232,7 +232,7 @@ onUnmounted(() => {
         <img v-else-if="a.media" class="ov-media" :src="a.media" alt="" />
         <div v-else class="ov-coin"><i class="fa-solid fa-sack-dollar"></i></div>
         <div class="ov-from">{{ a.from }}</div>
-        <div v-if="a.showAmount" class="ov-amount">{{ a.amount }} <span>so'm</span></div>
+        <div v-if="a.showAmount" class="ov-amount">{{ a.amount }} <span>soʻm</span></div>
         <div v-if="a.showMessage && a.segments.length" class="ov-msg">
           <template v-for="(seg, si) in a.segments" :key="si">
             <span v-if="seg.t === 'text'">{{ seg.v }}</span>

@@ -63,7 +63,7 @@ watch(() => auth.user?.id, (id, prev) => {
             <span class="from">{{ a.from }}</span>
             <span class="verb">donat qildi</span>
           </div>
-          <div class="amount">{{ a.amount }} <span class="ccy">so'm</span></div>
+          <div class="amount">{{ a.amount }} <span class="ccy">soʻm</span></div>
           <div v-if="a.message" class="message">"{{ a.message }}"</div>
         </div>
       </div>

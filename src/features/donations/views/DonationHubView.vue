@@ -1,25 +1,30 @@
 <script setup>
-// Donat hub — pastki "Donat" tab ichidagi bo'limlar:
-//   Wallet · Yuborish · Kelgan · Top
-import { ref } from 'vue'
-import WalletPanel from '@/features/wallet/components/WalletPanel.vue'
-import SendDonation from '../components/SendDonation.vue'
+// Donat hub — pastki "Donatlar" tab ichidagi boʻlimlar:
+//   Yuborilganlar · Kelgan · Top
+//
+// Hamyon (toʻldirish) va hamyondan yuborish mydonation da YOʻQ: hamyon
+// orqali donat huquqiy sabab bilan yopiq. Donat faqat streamer
+// sahifasidan, karta (Payme) orqali.
+import { ref, onMounted } from 'vue'
+import SentDonations from '../components/SentDonations.vue'
 import ReceivedDonations from '../components/ReceivedDonations.vue'
 import TopDonors from '../components/TopDonors.vue'
+import { streamerApi } from '@/features/streamer/api/streamer.api'
 
 const tabs = [
-  { key: 'wallet', label: 'Wallet', icon: 'fa-solid fa-wallet' },
-  { key: 'send', label: 'Yuborish', icon: 'fa-solid fa-paper-plane' },
+  { key: 'sent', label: 'Yuborilganlar', icon: 'fa-solid fa-paper-plane' },
   { key: 'received', label: 'Kelgan', icon: 'fa-solid fa-inbox' },
   { key: 'top', label: 'Top', icon: 'fa-solid fa-ranking-star' },
 ]
-const active = ref('wallet')
-const receivedRef = ref(null)
+const active = ref('sent')
 
-function onSent() {
-  // Yuborgandan keyin — wallet balansi o'zgaradi; keyingi ochilishda yangilanadi
-  active.value = 'wallet'
-}
+// Standart tab: streamerga "Kelgan", qolganlarga "Yuborilganlar"
+onMounted(async () => {
+  try {
+    const { data } = await streamerApi.me()
+    if (data) active.value = 'received'
+  } catch { /* streamer emas */ }
+})
 </script>
 
 <template>
@@ -34,6 +39,7 @@ function onSent() {
         :key="t.key"
         class="subtab"
         :class="{ active: active === t.key }"
+        :data-test="`tab-${t.key}`"
         @click="active = t.key"
       >
         <i :class="t.icon"></i>
@@ -42,9 +48,8 @@ function onSent() {
     </div>
 
     <div class="panel">
-      <WalletPanel v-if="active === 'wallet'" />
-      <SendDonation v-else-if="active === 'send'" @sent="onSent" />
-      <ReceivedDonations v-else-if="active === 'received'" ref="receivedRef" />
+      <SentDonations v-if="active === 'sent'" />
+      <ReceivedDonations v-else-if="active === 'received'" />
       <TopDonors v-else-if="active === 'top'" />
     </div>
   </div>

@@ -19,13 +19,16 @@ export const billingApi = {
   getTopupQuote(amount) {
     return api.get('/billing/topups/quote', { params: { amount } })
   },
-  // GET /billing/intents/{id} — to'lov holati (poll, auth'siz)
+  // GET /billing/intents/{id} — to'lov holati (poll, auth'siz).
+  // Donatda `reward`: { cashback_w, first_bonus_w, status, expires_at, message }
   getIntent(id) {
     return api.get(`/billing/intents/${id}`)
   },
+  // GET /billing/donations/quote — donat cheki (komissiya, net, W).
+  // Komissiya va W frontendda HISOBLANMAYDI — faqat shu javobdan.
+  donationQuote({ recipient_public_id, amount, cover_fee }) {
+    return api.get('/billing/donations/quote', {
+      params: { recipient_public_id, amount, cover_fee: Boolean(cover_fee) },
+    })
+  },
 }
-
-// PSP donat komissiyasi (backend PSP_DONATION_RATE bilan mos)
-export const PSP_DONATION_RATE = 0.015
-// Wallet donat komissiyasi (backend COMMISSION_RATE bilan mos)
-export const WALLET_DONATION_RATE = 0.007

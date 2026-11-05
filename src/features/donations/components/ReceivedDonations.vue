@@ -42,9 +42,9 @@ defineExpose({ load })
         <div class="body">
           <div class="top-line">
             <div class="amt">
-              +{{ fmtSom(d.net) }} <span class="ccy">so'm</span>
+              +{{ fmtSom(d.net) }} <span class="ccy">soʻm</span>
               <span v-if="d.cover_fee" class="covered-chip" title="Komissiya donator tomonidan qoplangan">
-                100% to'liq
+                100% toʻliq
               </span>
             </div>
             <span v-if="d.created_at" class="time">{{ formatDate(d.created_at) }}</span>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from './routes'
 import { useAuthStore } from '../../features/auth/store/auth.store'
 import { tokenStorage } from '@/app/api/tokenStorage'
+import { safeRedirect } from '@/shared/utils/redirect'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -16,9 +17,9 @@ router.beforeEach(async (to) => {
     await auth.init()
   }
 
-  // Login sahifaga — agar allaqachon kirgan bo'lsa, home'ga
+  // Login sahifaga — agar allaqachon kirgan bo'lsa, redirect'ga (bo'lmasa home)
   if (to.name === 'login' && auth.isAuthenticated) {
-    return { name: 'home' }
+    return safeRedirect(to.query.redirect, '/')
   }
 
   // requiresAuth=true bo'lgan sahifalar (faqat profile)
